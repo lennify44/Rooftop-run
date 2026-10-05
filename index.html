@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rooftop Run</title>
+<meta name="description" content="A first-person parkour run over the rooftops: sprint, wall-run, wall-jump and slide through nine sections.">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1424">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #f3ece2;
+    --dim: #a89c93;
+    --glow: #ff7a3d;
+    --cp: #5ee6d0;
+    --line: #5a4d5e;
+    --chip: #2a2133;
+    --shade: rgba(18, 14, 26, 0.78);
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; overscroll-behavior: none; }
+  body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  body.playing { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  canvas { touch-action: none; }
+  body.touch .starts button { width: 44px; padding-block: 11px; }
+  body { margin: 0; background: #1a1424; color: var(--ink); overflow: hidden; font-family: "JetBrains Mono", ui-monospace, monospace; }
+  canvas { display: block; }
+  body.playing canvas { cursor: crosshair; }
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  #stats { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; display: flex; flex-wrap: wrap; gap: 20px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+  #stats b { display: block; font-size: 22px; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+  #cross { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--ink); opacity: .7; }
+  #toast { position: absolute; left: 50%; top: 28%; transform: translateX(-50%); width: max-content; max-width: calc(100vw - 32px); text-align: center; text-wrap: balance; font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 900; font-size: clamp(24px, 6vw, 34px); letter-spacing: .08em; color: var(--cp); text-transform: uppercase; opacity: 0; transition: opacity .4s; text-shadow: 0 2px 20px rgba(0,0,0,.5); }
+  #menu { position: fixed; inset: 0; display: flex; overflow-y: auto; background: var(--shade); padding-inline: 16px; }
+  #menu .card { margin: auto; width: 100%; max-width: 920px; padding-block: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 56px; align-items: start; }
+  #menu .col { display: grid; gap: 18px; min-width: 0; }
+  body:not(.playing) #stats, body:not(.playing) #cross { visibility: hidden; }
+  @media (max-height: 520px) {
+    #menu h1 { font-size: 44px; }
+    #menu .card { padding-block: 12px; gap: 12px 40px; }
+    #menu .col { gap: 12px; }
+  }
+  @media (max-width: 760px) { #menu .card { grid-template-columns: minmax(0, 1fr); max-width: 460px; gap: 18px; } }
+  h1 { margin: 0; font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 900; font-size: clamp(56px, 12vw, 96px); line-height: .85; letter-spacing: .01em; text-transform: uppercase; color: var(--ink); text-wrap: balance; }
+  h1 span { color: var(--glow); }
+  #menu p { margin: 0; color: var(--dim); line-height: 1.6; font-size: 13px; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; align-items: baseline; }
+  .keys span { color: var(--dim); }
+  kbd { font-family: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 1px 7px; background: var(--chip); white-space: nowrap; }
+  button { font: 700 15px "JetBrains Mono", monospace; letter-spacing: .1em; text-transform: uppercase; padding: 14px 20px; border: 0; border-radius: 4px; background: var(--glow); color: #1a1424; cursor: pointer; justify-self: start; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  #best { color: var(--cp); }
+  .starts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .starts .label, .row label { width: 100%; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+  .starts button { font-size: 13px; letter-spacing: 0; padding: 6px 0; width: 36px; text-align: center; background: var(--chip); color: var(--ink); border: 1px solid var(--line); }
+  .starts button:hover { border-color: var(--cp); color: var(--cp); }
+  .row { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; }
+  input[type=range] { accent-color: var(--glow); width: 180px; max-width: 100%; }
+  #sensv { font-variant-numeric: tabular-nums; }
+  .row .label { width: 100%; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+  .seg { display: flex; }
+  .seg button { font-size: 12px; letter-spacing: .04em; padding: 7px 12px; background: var(--chip); color: var(--ink); border: 1px solid var(--line); border-radius: 0; }
+  .seg button:first-child { border-radius: 4px 0 0 4px; }
+  .seg button:last-child { border-radius: 0 4px 4px 0; border-left: 0; }
+  .seg button[aria-pressed="true"] { background: var(--glow); border-color: var(--glow); color: #1a1424; }
+  .note { width: 100%; font-size: 12px; line-height: 1.5; color: var(--dim); }
+  body.touch #stats { right: 130px; }
+  #touch { position: fixed; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+  #stick { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 2px solid rgba(243, 236, 226, .35); background: rgba(26, 20, 36, .25); pointer-events: none; }
+  #stick.sprint { border-color: var(--glow); }
+  #knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(243, 236, 226, .55); }
+  #touch .tbtn { position: absolute; padding: 0; border-radius: 50%; background: rgba(26, 20, 36, .45); border: 2px solid rgba(243, 236, 226, .45); color: var(--ink); font: 700 12px "JetBrains Mono", monospace; letter-spacing: .06em; text-transform: uppercase; touch-action: none; }
+  #touch .tbtn.on { background: rgba(255, 122, 61, .55); border-color: var(--glow); }
+  #t-jump { width: 88px; height: 88px; right: calc(24px + env(safe-area-inset-right, 0px)); bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+  #t-slide { width: 64px; height: 64px; right: calc(128px + env(safe-area-inset-right, 0px)); bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
+  #touch .tsmall { width: 44px; height: 44px; border-radius: 8px; top: calc(14px + env(safe-area-inset-top, 0px)); }
+  #t-pause { right: calc(16px + env(safe-area-inset-right, 0px)); }
+  #t-reset { right: calc(70px + env(safe-area-inset-right, 0px)); }
+  #mcheck { position: absolute; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px; font-size: 12px; line-height: 1.5; color: var(--ink); text-shadow: 0 1px 3px #000; }
+  #err { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 10; padding: 10px 14px; border-radius: 4px; background: #7a1b14; color: #fff; font-size: 13px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div id="touch" hidden>
+  <div id="stick" hidden><div id="knob"></div></div>
+  <button type="button" class="tbtn" id="t-jump">Jump</button>
+  <button type="button" class="tbtn" id="t-slide">Slide</button>
+  <button type="button" class="tbtn tsmall" id="t-reset" aria-label="Back to checkpoint">R</button>
+  <button type="button" class="tbtn tsmall" id="t-pause" aria-label="Pause">II</button>
+</div>
+
+<div id="hud">
+  <div id="stats">
+    <div><span id="tl">Time</span><b id="t">0.00</b></div>
+    <div>Falls<b id="d">0</b></div>
+    <div>Checkpoint<b id="c">0 / 8</b></div>
+    <div>Speed<b id="v">0.0</b></div>
+  </div>
+  <div id="cross"></div>
+  <div id="toast"></div>
+  <div id="mcheck" hidden></div>
+</div>
+
+<div id="menu">
+  <div class="card">
+    <div class="col">
+      <h1>Rooftop<br><span>Run</span></h1>
+      <button id="go" type="button">Play</button>
+      <p id="msg">Nine sections of pillars, beams, moving slabs, a wall run, a chimney, bounce pads and a slide roof above a city that isn't there anymore. Reach the gold roof. Long gaps need a sprint jump from the very edge; before small targets, hold S in the air to brake. The last gap needs a slide jump.</p>
+      <p id="best"></p>
+      <div class="starts" id="starts"><span class="label">Practice from checkpoint (no best time)</span></div>
+    </div>
+    <div class="col">
+      <p id="touchhelp" hidden>Left thumb: drag anywhere on the left to move, push to the edge to sprint. Right thumb: drag to look. Hold Jump for full height; pull the stick back in the air to brake; Slide while sprinting slides under bars. Turn your phone sideways for the widest view. On Android the game goes full screen when you press Play; on iPhone, use Share, then Add to Home Screen, for full screen.</p>
+      <div class="keys" id="keyshelp">
+        <kbd>WASD</kbd><span>move</span>
+        <kbd>Mouse</kbd><span>look (arrow keys work too)</span>
+        <kbd>Space</kbd><span>jump; hold for full height</span>
+        <kbd>Shift</kbd><span>sprint</span>
+        <kbd>C</kbd><span>slide while sprinting, crouch otherwise</span>
+        <kbd>W+Shift</kbd><span>in the air along a wall: wall run</span>
+        <kbd>Space</kbd><span>in the air on a wall: wall jump</span>
+        <kbd>R</kbd><span>back to checkpoint</span>
+        <kbd>P / Esc</kbd><span>pause</span>
+        <kbd>M</kbd><span>sound on or off</span>
+        <kbd>F2</kbd><span>show the mouse check</span>
+      </div>
+      <div class="row" id="mouserow">
+        <span class="label">Mouse control</span>
+        <div class="seg" role="group" aria-label="Mouse control">
+          <button type="button" id="m-capture">Capture</button>
+          <button type="button" id="m-follow">Follow cursor</button>
+        </div>
+        <span class="note" id="mnote"></span>
+        <span class="note" id="mstat"></span>
+      </div>
+      <div class="row">
+        <label for="sens" id="senslabel">Mouse sensitivity</label>
+        <input type="range" id="sens" min="0.3" max="3" step="0.1" value="1">
+        <span id="sensv">1.0×</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="err" role="alert" hidden></div>
+<script>
+  // Show failures on screen instead of leaving a frozen page.
+  addEventListener('error', e => {
+    const el = document.getElementById('err');
+    el.hidden = false;
+    el.textContent = 'Something broke: ' + (e.message || 'a script failed to load (' + (e.target && e.target.src) + ')') +
+      (e.lineno ? ' · line ' + e.lineno : '');
+  }, true);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  // ---------- renderer / scene ----------
+  const lowPower = matchMedia('(pointer: coarse)').matches;   // phones and tablets: fewer pixels, smaller shadows
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, lowPower ? 1.5 : 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;   // keeps sunlit tops from blowing out to white
+  renderer.toneMappingExposure = 1.05;
+  document.body.prepend(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const SKY = 0x3b2a4a;
+  scene.background = new THREE.Color(SKY);
+  scene.fog = new THREE.Fog(SKY, 30, 140);
+
+  const camera = new THREE.PerspectiveCamera(78, innerWidth / innerHeight, 0.05, 400);
+  camera.rotation.order = 'YXZ';
+
+  scene.add(new THREE.HemisphereLight(0xffb48a, 0x2a1f3a, 0.75));
+  const sun = new THREE.DirectionalLight(0xffc49a, 1.1);
+  sun.position.set(-30, 50, 20);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(lowPower ? 1024 : 2048, lowPower ? 1024 : 2048);
+  sun.shadow.bias = -0.0006;
+  sun.shadow.normalBias = 0.04;
+  Object.assign(sun.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, near: 1, far: 150 });
+  scene.add(sun, sun.target);
+  sun.target.position.set(-15, 0, -40);
+
+  // setting sun disc
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(18, 48), new THREE.MeshBasicMaterial({ color: 0xff7a3d, fog: false, toneMapped: false }));
+  disc.position.set(60, 25, -220); disc.lookAt(0, 10, 0);
+  scene.add(disc);
+
+  // ---------- level ----------
+  const boxes = [];
+  const mats = {
+    concrete: new THREE.MeshStandardMaterial({ color: 0xc9bfb4, roughness: 0.9 }),
+    beam: new THREE.MeshStandardMaterial({ color: 0x8f6f63, roughness: 0.6, metalness: 0.3 }),
+    cp: new THREE.MeshStandardMaterial({ color: 0x5ee6d0, emissive: 0x1f8a7a, roughness: 0.5 }),
+    cpDone: new THREE.MeshStandardMaterial({ color: 0x9aa3a0, roughness: 0.7 }),
+    move: new THREE.MeshStandardMaterial({ color: 0xff7a3d, emissive: 0x6a2410, roughness: 0.5 }),
+    goal: new THREE.MeshStandardMaterial({ color: 0xffd35a, emissive: 0x8a5a00, roughness: 0.4, metalness: 0.4 }),
+    wall: new THREE.MeshStandardMaterial({ color: 0x6d5a7a, roughness: 0.8 }),
+    pad: new THREE.MeshStandardMaterial({ color: 0xff4fa3, emissive: 0x7a1048, roughness: 0.4 }),
+    bar: new THREE.MeshStandardMaterial({ color: 0xd9443a, emissive: 0x3a0c08, roughness: 0.6 }),
+    city: new THREE.MeshStandardMaterial({ color: 0x2a2036, roughness: 1 }),
+  };
+
+  // P(x, top, z, width, depth, height) — top is walkable surface height
+  function P(x, top, z, w, d, h = 1.2, kind = 'concrete', extra = {}) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats[kind]);
+    mesh.castShadow = mesh.receiveShadow = true;
+    scene.add(mesh);
+    const b = { x, y: top - h / 2, z, w, h, d, mesh, kind, dx: 0, ...extra };
+    if (b.ax) b.base = b[b.ax];
+    mesh.position.set(b.x, b.y, b.z);
+    boxes.push(b);
+    return b;
+  }
+  const top = b => b.y + b.h / 2;
+
+  // Place a piece `gap` metres past the edge of `from` in direction dir
+  // ('+x', '-x', '+z', '-z'), its centre shifted sideways by `side`.
+  function at(from, dir, gap, side, w, d) {
+    const s = dir[0] === '+' ? 1 : -1;
+    return dir[1] === 'x'
+      ? [from.x + s * (from.w / 2 + gap + w / 2), from.z + side]
+      : [from.x + side, from.z + s * (from.d / 2 + gap + d / 2)];
+  }
+  function piece(from, dir, gap, side, w, d, topY, h = 10, kind = 'concrete', extra = {}) {
+    const [x, z] = at(from, dir, gap, side, w, d);
+    return P(x, topY, z, w, d, h, kind, extra);
+  }
+  const checkpoints = [];
+  function checkpoint(from, dir, gap, side, w, d, topY) {
+    const [x, z] = at(from, dir, gap, side, w, d);
+    const b = P(x, topY, z, w, d, 1.2, 'cp');
+    b.cpIndex = checkpoints.length + 1;
+    checkpoints.push(b);
+    return b;
+  }
+  const mv = (ax, amp, speed, phase) => ({ ax, amp, speed, phase });
+
+  // Gaps are edge to edge in metres. A full sprint jump clears about 6.9 m on
+  // the flat, 6.4 m rising 0.5 m, 5.7 m rising 1 m and 7.8 m dropping 1 m
+  // (measured with the course bot), which is what the numbers below are set against.
+  const startPad = P(0, 0, 0, 8, 8, 3);
+  // A · pillars
+  let b = piece(startPad, '-z', 4.0, 0, 1.6, 1.6, 0.5);
+  b = piece(b, '-z', 4.6, 1.5, 1.4, 1.4, 1.0);
+  b = piece(b, '-z', 5.0, -2.5, 1.2, 1.2, 1.5);
+  b = piece(b, '-z', 5.8, 1.5, 1.0, 1.0, 1.5);
+  const cp1 = checkpoint(b, '-z', 6.0, -0.5, 3, 3, 1.0);
+  // B · beams
+  b = piece(cp1, '-z', 1.2, 0, 0.5, 10, 1.0, 0.5, 'beam');
+  b = piece(b, '-z', 4.2, 1.6, 0.5, 8, 1.4, 0.5, 'beam');
+  b = piece(b, '-z', 3.4, -1.2, 0.45, 0.45, 1.8, 6, 'beam');
+  const cp2 = checkpoint(b, '-z', 5.2, -0.8, 4, 4, 2.0);
+  // C · climb, one metre up per jump
+  b = piece(cp2, '-x', 3.5, -1.0, 1.2, 1.2, 3.0, 12);
+  b = piece(b, '-x', 4.0, 1.4, 1.0, 1.0, 4.0, 12);
+  b = piece(b, '-x', 4.3, -1.4, 1.0, 1.0, 5.0, 12);
+  b = piece(b, '-x', 4.6, 1.4, 0.9, 0.9, 6.0, 12);
+  b = piece(b, '-x', 4.8, -1.4, 0.8, 0.8, 7.1, 12);
+  const cp3 = checkpoint(b, '-x', 5.6, 0.7, 3, 3, 6.8);
+  // D · moving slabs: wait for the right moment
+  b = piece(cp3, '-x', 4.0, 0, 2.4, 2.4, 6.8, 0.6, 'move', mv('x', 2.5, 1.2, 0));
+  b = piece(b, '-x', 4.0, 0, 2.2, 2.2, 7.2, 0.6, 'move', mv('z', 3.0, 1.4, 1.5));
+  b = piece(b, '-x', 4.0, 0, 2.0, 2.0, 7.6, 0.6, 'move', mv('x', 2.0, 1.9, 0.4));
+  const cp4 = checkpoint(b, '-x', 4.0, 0, 3, 3, 7.4);
+  // E · needles: keep your speed
+  b = piece(cp4, '+z', 4.6, 0, 0.6, 0.6, 7.8, 14);
+  b = piece(b, '+z', 5.0, 1.2, 0.6, 0.6, 8.2, 14);
+  b = piece(b, '+z', 5.2, -1.5, 0.6, 0.6, 8.6, 14);
+  b = piece(b, '+z', 5.6, 1.2, 0.5, 0.5, 8.6, 14);
+  b = piece(b, '+z', 5.4, -1.0, 0.5, 0.5, 9.0, 14);
+  b = piece(b, '+z', 6.0, 0.6, 0.5, 0.5, 9.0, 14);
+  const cp5 = checkpoint(b, '+z', 5.0, -0.3, 4, 4, 9.0);
+  cp5.face = [cp5.x, cp5.z + 10];
+  // F · wall run: sprint forward along the wall while in the air
+  const wall = P(cp5.x - cp5.w / 2 - 1.3, top(cp5) + 6, cp5.z + cp5.d / 2 + 1.5 + 8, 0.6, 16, 10, 'wall');
+  const land = piece(wall, '+z', 3.0, 1.8, 6, 4, top(cp5) - 0.5, 1.2);
+  // G · chimney: wall-jump between the two walls
+  const cp6 = checkpoint(land, '+z', 2.0, 1.5, 2.2, 5, top(land) + 0.5);
+  P(cp6.x - 1.5, top(cp6) + 10, cp6.z, 0.6, 5, 11, 'wall');
+  P(cp6.x + 1.5, top(cp6) + 10, cp6.z, 0.6, 5, 11, 'wall');
+  const exit = piece(cp6, '+z', 0, 0, 2.6, 2.6, top(cp6) + 5.5, 1.2);   // flush with the walls' far end
+  cp6.face = [exit.x, exit.z];
+  // H · bounce pads
+  b = piece(exit, '+z', 3.2, 0, 2, 2, top(exit) - 2.5, 0.5, 'pad');
+  const cp7 = checkpoint(b, '+z', 4.75, 0, 2.5, 2.5, top(b) + 4.0);
+  b = piece(cp7, '+x', 2.95, 4.5, 1.6, 1.6, top(cp7) - 2.5, 0.5, 'pad');
+  b = piece(b, '+x', 4.0, 3.5, 1.4, 1.4, top(b) + 3.0, 0.5, 'pad');
+  const cp8 = checkpoint(b, '+x', 3.8, 3.5, 4, 5, top(b) + 3.5);
+  // I · slide roof: slide under the red bars, then slide-jump the last gap
+  const roof = piece(cp8, '+x', 0, 0, 16.5, 5, top(cp8), 1.2);
+  for (const off of [4.5, 10.5]) {
+    // a gate: crossbar from 1.1 m (only a crouched player fits under) to 2.0 m
+    // (above the highest jump), on two posts outside the roof
+    const gx = roof.x - roof.w / 2 + off;
+    P(gx, top(roof) + 2.0, roof.z, 0.5, 6.6, 0.9, 'bar');
+    for (const s of [-1, 1]) P(gx, top(roof) + 2.0, roof.z + s * 3.05, 0.4, 0.4, 14, 'bar');
+  }
+  const goal = piece(roof, '+x', 7.8, 0, 5, 5, top(roof), 2, 'goal');
+
+  // light column over the goal so it can be found from anywhere
+  const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 240, 12, 1, true),
+    new THREE.MeshBasicMaterial({ color: 0xffd35a, transparent: true, opacity: 0.3, depthWrite: false, fog: false, toneMapped: false }));
+  beacon.position.set(goal.x, top(goal) + 120, goal.z);
+  scene.add(beacon);
+
+  checkpoints.forEach(c => {
+    const next = boxes[boxes.indexOf(c) + 1];
+    const [tx, tz] = c.face || [next.x, next.z];
+    c.faceYaw = Math.atan2(-(tx - c.x), -(tz - c.z));
+  });
+  const spawnAt = c => ({ x: c.x, y: top(c), z: c.z, yaw: c.faceYaw });
+
+  // background city, kept clear of the course
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const c of boxes) {
+    const ex = c.w / 2 + (c.ax === 'x' ? c.amp : 0), ez = c.d / 2 + (c.ax === 'z' ? c.amp : 0);
+    minX = Math.min(minX, c.x - ex); maxX = Math.max(maxX, c.x + ex);
+    minZ = Math.min(minZ, c.z - ez); maxZ = Math.max(maxZ, c.z + ez);
+  }
+  const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+  const midX = (minX + maxX) / 2, midZ = (minZ + maxZ) / 2;
+  for (let i = 0; i < (lowPower ? 140 : 240); i++) {
+    const x = midX - 140 + rnd() * 280, z = midZ - 140 + rnd() * 280;
+    const w = 4 + rnd() * 10, h = 10 + rnd() * 40, sink = rnd() * 10;
+    if (x + w / 2 > minX - 12 && x - w / 2 < maxX + 12 && z + w / 2 > minZ - 12 && z - w / 2 < maxZ + 12) continue;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mats.city);
+    m.position.set(x, -30 + h / 2 - sink, z);
+    scene.add(m);
+  }
+
+  // ---------- sound (Web Audio, started by the Play click) ----------
+  let ac = null, master = null, noiseBuf = null, wind = null, muted = false;
+  try { muted = localStorage.getItem('rooftop-muted') === '1'; } catch {}
+  function initAudio() {
+    if (ac) { ac.resume?.(); return; }
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
+    master = ac.createGain(); master.gain.value = muted ? 0 : 0.5; master.connect(ac.destination);
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
+    const g = ac.createGain(); g.gain.value = 0;
+    src.connect(lp).connect(g).connect(master); src.start();
+    wind = { g, lp };
+  }
+  function tone(f0, f1, dur, type = 'triangle', vol = 0.15, delay = 0) {
+    if (!ac) return;
+    const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function noise(dur, freq, vol, q = 1, delay = 0) {
+    if (!ac) return;
+    const t = ac.currentTime + delay, src = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = noiseBuf;
+    bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q;
+    g.gain.setValueAtTime(Math.max(0.002, vol), t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    src.connect(bp).connect(g).connect(master); src.start(t, Math.random() * 1.5); src.stop(t + dur + 0.02);
+  }
+  const sfx = {
+    jump: () => tone(260, 520, 0.09, 'triangle', 0.12),
+    wall: () => { tone(330, 700, 0.1, 'square', 0.05); noise(0.06, 2200, 0.2, 2); },
+    land: v => noise(0.14, 250 + v * 15, Math.min(0.5, v * 0.03)),
+    step: () => noise(0.04, 900, 0.06, 2),
+    slide: () => noise(0.5, 1400, 0.16, 0.6),
+    pad: () => tone(160, 900, 0.3, 'sine', 0.22),
+    cp: () => { tone(660, 660, 0.25, 'sine', 0.15); tone(990, 990, 0.4, 'sine', 0.12, 0.1); },
+    fall: () => tone(480, 60, 0.6, 'sawtooth', 0.05),
+    win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, f, 0.45, 'triangle', 0.12, i * 0.11)),
+  };
+  function toggleMute() {
+    muted = !muted;
+    if (master) master.gain.value = muted ? 0 : 0.5;
+    try { localStorage.setItem('rooftop-muted', muted ? '1' : '0'); } catch {}
+    toast(muted ? 'Sound off' : 'Sound on', '#a89c93');
+  }
+
+  // ---------- player ----------
+  // reduced motion: no head bob, camera tilt, landing dip or speed zoom
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const R = 0.3, H = 1.7, CH = 0.9;
+  const WALK = 5.8, SPRINT = 9.2, CROUCH = 3, JUMP = 9.6, G = 28;
+  const COYOTE = 0.1, BUFFER = 0.12, PAD = 16, WALL_PUSH = 5.5, WALLRUN_T = 1.8, SLIDE_T = 0.8;
+  const GROUND_ACCEL = 70, GROUND_BRAKE = 45, AIR_ACCEL = 12;   // m/s²
+  const p = {
+    x: 0, y: 0, z: 2, vx: 0, vy: 0, vz: 0, h: H, eye: H - 0.15, dip: 0,
+    ground: null, wasGround: null, coyote: 0, buffer: 0, jumpCut: false,
+    wall: null, wallT: 0, run: 0, wallRunning: false,
+    crouch: false, slideT: 0, slideV: 0, sdx: 0, sdz: 0, slideCD: 0,
+  };
+  let yaw = 0, pitch = 0, roll = 0, bob = 0, stepPhase = 0;
+  let spawn = { x: 0, y: 0, z: 2, yaw: 0 };
+  let cpReached = 0, falls = 0, time = 0, running = false, finished = false, practice = 0;
+
+  const keys = {};
+  const GAME_KEYS = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+  addEventListener('keydown', e => {
+    if (running && GAME_KEYS.has(e.code)) e.preventDefault();
+    keys[e.code] = true;
+    if (e.repeat) return;
+    if (e.code === 'KeyM') toggleMute();
+    if (e.code === 'F2') { e.preventDefault(); mcheckEl.hidden = !mcheckEl.hidden; }
+    if (!running) return;
+    if (e.code === 'Space') p.buffer = BUFFER;
+    if (e.code === 'KeyR') respawn(false);
+    if (e.code === 'KeyP' || e.code === 'Escape') { if (locked) document.exitPointerLock?.(); else pause(); }
+  });
+  addEventListener('keyup', e => { keys[e.code] = false; });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });   // switched apps or tabs
+  addEventListener('blur', () => {
+    for (const k in keys) keys[k] = false;
+    edgeX = edgeY = 0;
+    if (running && !locked) pause();   // clicked away from the game
+  });
+
+  function overlaps(b) {
+    return p.x + R > b.x - b.w / 2 && p.x - R < b.x + b.w / 2 &&
+           p.y + p.h > b.y - b.h / 2 && p.y < b.y + b.h / 2 &&
+           p.z + R > b.z - b.d / 2 && p.z - R < b.z + b.d / 2;
+  }
+
+  function moveAxis(axis, amt) {
+    p[axis] += amt;
+    for (const b of boxes) {
+      if (!overlaps(b)) continue;
+      const top = b.y + b.h / 2;
+      if (axis === 'y') {
+        if (amt < 0) {
+          const impact = -p.vy;
+          p.y = top;
+          if (b.kind === 'pad') { p.vy = PAD; p.jumpCut = false; sfx.pad(); continue; }
+          p.vy = 0; p.ground = b;
+          if (!p.wasGround && impact > 5) { sfx.land(impact); if (!calm) p.dip = Math.min(0.3, impact * 0.012); }
+        } else if (amt > 0) {
+          p.y = b.y - b.h / 2 - p.h; p.vy = 0;
+        }
+      } else {
+        // step up tiny ledges (< 0.25) instead of stopping
+        if (top - p.y > 0 && top - p.y < 0.25 && p.wasGround) { p.y = top; continue; }
+        const half = axis === 'x' ? b.w / 2 : b.d / 2;
+        p[axis] = amt > 0 ? b[axis] - half - R - 1e-4 : b[axis] + half + R + 1e-4;
+        if (axis === 'x') p.vx = 0; else p.vz = 0;
+        if (b.kind === 'wall') {
+          p.wall = axis === 'x' ? { nx: amt > 0 ? -1 : 1, nz: 0 } : { nx: 0, nz: amt > 0 ? -1 : 1 };
+          p.wallT = 0.15;
+        }
+      }
+    }
+  }
+
+  function respawn(fell) {
+    if (fell) { falls++; sfx.fall(); }
+    Object.assign(p, {
+      x: spawn.x, y: spawn.y, z: spawn.z, vx: 0, vy: 0, vz: 0, h: H, dip: 0,
+      ground: null, wasGround: null, coyote: 0, buffer: 0, wallT: 0, crouch: false, slideT: 0,
+    });
+    yaw = spawn.yaw; pitch = 0;
+  }
+
+  // move horizontal velocity toward (tx, tz) by at most a * dt
+  function accelToward(tx, tz, a, dt) {
+    const dx = tx - p.vx, dz = tz - p.vz, d = Math.hypot(dx, dz), m = a * dt;
+    if (d <= m) { p.vx = tx; p.vz = tz; } else { p.vx += dx / d * m; p.vz += dz / d * m; }
+  }
+
+  function toast(text, color, ms = 1400) {
+    const el = document.getElementById('toast');
+    el.textContent = text; el.style.color = color || 'var(--cp)';
+    el.style.opacity = 1;
+    clearTimeout(toast.t); toast.t = setTimeout(() => el.style.opacity = 0, ms);
+  }
+
+  function update(dt, t) {
+    // moving platforms
+    for (const b of boxes) {
+      if (!b.ax) continue;
+      const old = b[b.ax];
+      b[b.ax] = b.base + Math.sin(t * b.speed + b.phase) * b.amp;
+      b.dx = b[b.ax] - old;
+      b.mesh.position.set(b.x, b.y, b.z);
+    }
+    // ride
+    if (p.ground && p.ground.ax) p[p.ground.ax] += p.ground.dx;
+
+    let f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
+    let s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
+    let sprinting = keys.ShiftLeft || keys.ShiftRight;
+    if (stick.id !== null && stick.mag > 0.2) {          // touch stick: pushed to the edge sprints
+      f = -stick.y; s = stick.x;
+      if (stick.mag > 0.85 && f > 0.3) sprinting = true;
+    }
+    let wx = -Math.sin(yaw) * f + Math.cos(yaw) * s;
+    let wz = -Math.cos(yaw) * f - Math.sin(yaw) * s;
+    const len = Math.hypot(wx, wz) || 1; wx /= len; wz /= len;
+    const hs = Math.hypot(p.vx, p.vz);
+
+    // crouch and slide
+    p.slideCD -= dt;
+    if (keys.KeyC && !p.crouch) {
+      p.crouch = true; p.h = CH;
+      if (p.ground && hs > WALK + 0.3 && p.slideCD <= 0) {
+        p.slideT = SLIDE_T; p.slideV = Math.max(hs, SPRINT) + 3;
+        p.sdx = p.vx / hs; p.sdz = p.vz / hs;
+        sfx.slide();
+      }
+    } else if (!keys.KeyC && p.crouch) {
+      p.h = H;
+      if (boxes.some(overlaps)) p.h = CH; else p.crouch = false;   // no headroom: stay down
+    }
+    if (p.slideT > 0 && (!p.ground || !p.crouch)) { p.slideT = 0; p.slideCD = 0.25; }
+
+    const speed = (f || s) ? (p.crouch ? CROUCH : sprinting && f > 0 ? SPRINT : WALK) : 0;
+    if (p.slideT > 0) {
+      p.slideT -= dt;
+      p.slideV = Math.max(CROUCH, p.slideV - 5 * dt);
+      p.vx = p.sdx * p.slideV; p.vz = p.sdz * p.slideV;
+      if (p.slideT <= 0) p.slideCD = 0.25;
+    } else if (p.ground) {
+      accelToward(wx * speed, wz * speed, speed ? GROUND_ACCEL : GROUND_BRAKE, dt);
+    } else if (speed) {
+      accelToward(wx * speed, wz * speed, AIR_ACCEL, dt);
+      // air steering never bleeds speed from slides, pads or wall runs
+      const after = Math.hypot(p.vx, p.vz);
+      if (hs > speed && after < hs && after > 0 && p.vx * wx + p.vz * wz > 0) {
+        p.vx *= hs / after; p.vz *= hs / after;
+      }
+    }
+
+    // jumps
+    p.coyote = p.ground ? COYOTE : p.coyote - dt;
+    p.buffer -= dt;
+    if (p.buffer > 0 && p.coyote > 0) {
+      p.vy = JUMP; p.buffer = 0; p.coyote = 0; p.ground = null; p.jumpCut = true;
+      if (p.slideT > 0) { p.slideT = 0; p.slideCD = 0.25; }
+      sfx.jump();
+    }
+    p.wallT -= dt;
+    if (p.ground) p.run = WALLRUN_T;
+    if (p.buffer > 0 && p.wallT > 0 && !p.ground) {
+      // push off the wall, keep speed along it
+      p.vy = JUMP; p.jumpCut = true;
+      if (p.wall.nx) p.vx = p.wall.nx * WALL_PUSH; else p.vz = p.wall.nz * WALL_PUSH;
+      p.buffer = 0; p.wallT = 0; p.run = WALLRUN_T;
+      sfx.wall();
+    }
+    // wall run: sprinting forward while touching a wall in the air
+    p.wallRunning = p.wallT > 0.1 && !p.ground && sprinting && f > 0 && p.run > 0;
+    if (p.wallRunning) {
+      p.run -= dt;
+      if (p.vy < -0.6) p.vy = -0.6;
+      p.vx -= p.wall.nx * 2 * dt; p.vz -= p.wall.nz * 2 * dt;
+      const along = p.wall.nx ? Math.sign(wz || -1) : Math.sign(wx || -1);
+      if (p.wall.nx) p.vz = along * SPRINT; else p.vx = along * SPRINT;
+    }
+    if (p.jumpCut && !keys.Space && p.vy > 3) p.vy -= G * dt * 1.2; // short hop on release
+
+    p.vy -= G * dt * (p.wallRunning ? 0.15 : 1);
+    if (p.vy < -40) p.vy = -40;
+
+    p.wasGround = p.ground;
+    p.ground = null;
+    if (p.wallT > 0 && !p.wasGround) { moveAxis('x', -p.wall.nx * 0.01); moveAxis('z', -p.wall.nz * 0.01); }
+    moveAxis('x', p.vx * dt);
+    moveAxis('z', p.vz * dt);
+    moveAxis('y', p.vy * dt);
+    if (!p.ground && p.wasGround && p.vy <= 0) {
+      // stick to ground when walking down tiny steps
+      const saveY = p.y; p.y -= 0.05;
+      if (!boxes.some(overlaps)) p.y = saveY; else { p.y = saveY; moveAxis('y', -0.05); }
+    }
+    if (p.ground) p.jumpCut = false;
+
+    if (p.y < -12 || p.y < spawn.y - 9) { respawn(true); toast('Fell', '#ff7a3d'); }
+
+    const g = p.ground;
+    if (g && g.cpIndex && g.cpIndex > cpReached) {
+      cpReached = g.cpIndex;
+      g.mesh.material = mats.cpDone;
+      spawn = spawnAt(g);
+      splits[cpReached] = time;
+      const ref = practice ? null : bestRun?.splits?.[cpReached];
+      toast('Checkpoint ' + cpReached + ' · ' + fmt(time) + (ref ? ' (' + (time < ref ? '−' : '+') + fmt(Math.abs(time - ref)) + ')' : ''),
+            ref && time > ref ? '#ff7a3d' : undefined);
+      sfx.cp();
+    }
+    if (g === goal && !finished) finish();
+
+    // camera
+    const hs2 = Math.hypot(p.vx, p.vz);
+    if (p.ground && hs2 > 1 && p.slideT <= 0) {
+      bob += hs2 * dt * 1.6;
+      const ph = Math.floor(bob / Math.PI);
+      if (ph !== stepPhase) { stepPhase = ph; sfx.step(); }
+    }
+    p.eye += ((p.h - 0.15) - p.eye) * Math.min(1, dt * 14);
+    p.dip *= Math.max(0, 1 - dt * 8);
+    const rollT = calm ? 0 : p.wallRunning ? 0.1 * Math.sign(p.wall.nx * Math.cos(yaw) - p.wall.nz * Math.sin(yaw)) : p.slideT > 0 ? 0.035 : 0;
+    roll += (rollT - roll) * Math.min(1, dt * 10);
+    camera.position.set(p.x, p.y + p.eye - p.dip + (calm ? 0 : Math.sin(bob * 2) * 0.04 * Math.min(1, hs2 / 5)), p.z);
+    camera.rotation.set(pitch, yaw, roll);
+    const fov = 78 + (calm ? 0 : Math.max(0, hs2 - WALK) * 1.4);
+    if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
+
+    sun.position.set(p.x - 30, 50, p.z + 20);
+    sun.target.position.set(p.x, 0, p.z);
+  }
+
+  function fmt(s) { return s.toFixed(2); }
+  // best run = { time, splits, ghost: flat [x,y,z,...] sampled every GHOST_DT }
+  const KEY = 'rooftop-best-v3', GHOST_DT = 0.05;
+  function readBest() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch { return null; } }
+  let bestRun = readBest(), splits = [], trail = [], trailT = 0;
+  function showBest() {
+    document.getElementById('best').textContent = bestRun ? 'Best run: ' + fmt(bestRun.time) + ' s · the blue ghost replays it' : '';
+  }
+
+  const ghost = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.7, 0.6),
+    new THREE.MeshBasicMaterial({ color: 0x7fb8ff, transparent: true, opacity: 0.35, depthWrite: false }));
+  ghost.visible = false; scene.add(ghost);
+  function record(dt) {
+    trailT += dt;
+    while (trailT >= GHOST_DT) { trailT -= GHOST_DT; trail.push(+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)); }
+    const g = bestRun?.ghost;
+    if (practice || !g || !g.length) { ghost.visible = false; return; }
+    const f = time / GHOST_DT, i = Math.min(Math.floor(f), g.length / 3 - 2), a = Math.min(1, f - i);
+    if (i < 0) return;
+    ghost.visible = true;
+    ghost.position.set(g[i*3] + (g[i*3+3] - g[i*3]) * a, g[i*3+1] + (g[i*3+4] - g[i*3+1]) * a + 0.85, g[i*3+2] + (g[i*3+5] - g[i*3+2]) * a);
+  }
+
+  function finish() {
+    finished = true; running = false;
+    document.body.classList.remove('playing');
+    hideTouch();
+    sfx.win();
+    let text;
+    if (practice) {
+      text = `Gold roof reached in ${fmt(time)} s, practising from checkpoint ${practice}. Practice runs don't set a best time.`;
+    } else {
+      const isBest = !bestRun || time < bestRun.time;
+      if (isBest) {
+        bestRun = { time, splits: splits.slice(), ghost: trail.slice() };
+        try { localStorage.setItem(KEY, JSON.stringify(bestRun)); } catch {}
+      }
+      text = `Gold roof reached in ${fmt(time)} s with ${falls} fall${falls === 1 ? '' : 's'}.` + (isBest ? ' New best.' : '');
+    }
+    document.getElementById('msg').textContent = text;
+    document.getElementById('go').textContent = 'Run again';
+    showBest();
+    document.exitPointerLock?.();
+    menu.hidden = false;
+  }
+
+  function reset() {
+    boxes.forEach(b => { if (b.cpIndex) b.mesh.material = mats.cp; });
+    spawn = { x: 0, y: 0, z: 2, yaw: 0 };
+    cpReached = 0; falls = 0; time = 0; finished = false; practice = 0;
+    splits = []; trail = []; trailT = 0;
+    respawn(false);
+  }
+
+  function startFrom(n) {
+    reset();
+    if (n) {
+      practice = n;
+      checkpoints.slice(0, n).forEach(c => { c.mesh.material = mats.cpDone; });
+      cpReached = n;
+      spawn = spawnAt(checkpoints[n - 1]);
+      respawn(false);
+    }
+    start();
+  }
+
+  // ---------- input: mouse look ----------
+  // 'capture' uses pointer lock and raw mouse movement. Whenever the page is not
+  // captured (refused by the browser, or 'follow' picked in the menu) the view
+  // turns as the cursor moves, and holding it near a screen edge keeps turning.
+  const menu = document.getElementById('menu');
+  const canvas = renderer.domElement;
+  let mouseMode = 'capture', mouseNote = '';
+  try { if (localStorage.getItem('rooftop-mouse') === 'follow') mouseMode = 'follow'; } catch {}
+  let locked = false, releasing = false, zeroMoves = 0, movesSeen = 0, movesAtStart = 0, lockMoves = 0, lockTime = 0, hinted = false;
+  let lastMX = null, lastMY = null, edgeX = 0, edgeY = 0;
+
+  const mcheck = { events: 0, lockedEvents: 0, lockedMoving: 0, followPx: 0, lockReq: 0, lockOn: 0, lockErr: 0 };
+  function capture() {
+    if (mouseMode !== 'capture' || locked) return;
+    mcheck.lockReq++;
+    try { const r = canvas.requestPointerLock(); r?.catch?.(() => {}); } catch {}
+  }
+  function setMouseMode(m, note) {
+    mouseMode = m; mouseNote = note || '';
+    try { localStorage.setItem('rooftop-mouse', m); } catch {}
+    if (m === 'follow' && locked) { releasing = true; document.exitPointerLock?.(); }
+    renderMouseUI();
+  }
+  const mcheckEl = document.getElementById('mcheck');
+  function mouseReport() {
+    const c = mcheck;
+    return 'Mouse check · ' + (locked ? 'captured' : 'not captured') +
+      ` · capture asked ${c.lockReq}, granted ${c.lockOn}, refused ${c.lockErr}` +
+      ` · mouse events ${c.events} (while captured ${c.lockedEvents}, with movement ${c.lockedMoving})` +
+      ` · cursor-follow movement ${Math.round(c.followPx)} px · page focused: ${document.hasFocus() ? 'yes' : 'no'}`;
+  }
+  function renderMouseUI() {
+    document.getElementById('mstat').textContent = mcheck.lockReq || mcheck.events ? mouseReport() : '';
+    document.getElementById('m-capture').setAttribute('aria-pressed', mouseMode === 'capture');
+    document.getElementById('m-follow').setAttribute('aria-pressed', mouseMode === 'follow');
+    document.getElementById('mnote').textContent = mouseNote || (mouseMode === 'capture'
+      ? 'The cursor is hidden while you play. If the view does not turn, pick Follow cursor.'
+      : 'The view turns as the cursor moves. Hold it near a screen edge to keep turning.');
+  }
+  document.getElementById('m-capture').addEventListener('click', () => setMouseMode('capture'));
+  document.getElementById('m-follow').addEventListener('click', () => setMouseMode('follow'));
+  renderMouseUI();
+
+  function start() {
+    if (finished) { startFrom(0); return; }
+    initAudio();
+    menu.hidden = true; running = true;
+    document.body.classList.add('playing');
+    touchEl.hidden = !touchUI;
+    edgeX = edgeY = 0;
+    document.activeElement?.blur?.();
+    lastMX = lastMY = null;
+    movesAtStart = movesSeen;
+    if (touchUI) goFullscreen();
+    else capture();
+  }
+  // Phones: full screen and landscape where the browser allows it (Android). Must run
+  // inside the Play tap. iPhone Safari has no page full screen; Add to Home Screen does it.
+  function goFullscreen() {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) {
+      el.requestFullscreen({ navigationUI: 'hide' })
+        .then(() => screen.orientation?.lock?.('landscape').catch(() => {}))
+        .catch(() => {});
+    }
+    if (innerHeight > innerWidth) toast('Turn your phone sideways', '#a89c93', 2500);
+  }
+  function pause() {
+    if (!running) return;
+    running = false; menu.hidden = false;
+    document.body.classList.remove('playing');
+    hideTouch();
+    document.getElementById('go').textContent = 'Resume';
+    document.getElementById('msg').textContent = 'Paused. Timer stopped.';
+    if (movesSeen === movesAtStart) {
+      mouseNote = 'No mouse movement reached the game while you played. ' + (mouseMode === 'capture'
+        ? 'Pick Follow cursor and press Resume.' : 'Click once inside the game, then move the mouse.');
+    }
+    renderMouseUI();
+  }
+  document.getElementById('go').addEventListener('click', start);
+  const startsEl = document.getElementById('starts');
+  checkpoints.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = i + 1;
+    b.setAttribute('aria-label', 'Practice from checkpoint ' + (i + 1));
+    b.addEventListener('click', () => startFrom(i + 1));
+    startsEl.append(b);
+  });
+  document.addEventListener('pointerlockchange', () => {
+    locked = document.pointerLockElement === canvas;
+    if (locked) mcheck.lockOn++;
+    zeroMoves = 0; lastMX = lastMY = null;
+    if (locked) { lockMoves = movesSeen; lockTime = 0; hinted = false; }
+    if (!locked && running && !finished && !releasing) pause();
+    releasing = false;
+  });
+  document.addEventListener('pointerlockerror', () => {
+    mcheck.lockErr++;
+    if (mouseMode === 'capture') { mouseNote = 'This page is not allowed to capture the mouse here, so the view follows the cursor instead.'; renderMouseUI(); }
+  });
+  canvas.addEventListener('mousedown', () => { if (running) capture(); });
+
+  const sensEl = document.getElementById('sens'), sensV = document.getElementById('sensv');
+  let sens = 1;
+  try { sens = parseFloat(localStorage.getItem('rooftop-sens')) || 1; } catch {}
+  sensEl.value = sens; sensV.textContent = sens.toFixed(1) + '×';
+  sensEl.addEventListener('input', () => {
+    sens = parseFloat(sensEl.value); sensV.textContent = sens.toFixed(1) + '×';
+    try { localStorage.setItem('rooftop-sens', sens); } catch {}
+  });
+
+  let lastPointerType = '';
+  addEventListener('pointermove', e => { lastPointerType = e.pointerType; }, true);
+  addEventListener('pointerdown', e => { lastPointerType = e.pointerType; }, true);
+  // on-screen mouse check (F2, and in the pause menu): what the browser actually delivers
+  addEventListener('mousemove', e => {
+    mcheck.events++;
+    if (locked) { mcheck.lockedEvents++; if (e.movementX || e.movementY) mcheck.lockedMoving++; }
+  }, true);
+  addEventListener('mousemove', e => {
+    if (!locked && lastPointerType === 'touch') return;   // stray mouse events from taps
+    let mx, my;
+    if (locked) {
+      mx = e.movementX || 0; my = e.movementY || 0;
+      if (!mx && !my) {
+        // Some Linux setups grant capture but report no movement: fall back.
+        if (running && ++zeroMoves >= 12) setMouseMode('follow', 'Mouse capture reported no movement in this browser, so Rooftop Run switched to Follow cursor.');
+        return;
+      }
+      zeroMoves = 0;
+    } else {
+      mx = lastMX === null ? 0 : e.clientX - lastMX;
+      my = lastMY === null ? 0 : e.clientY - lastMY;
+      lastMX = e.clientX; lastMY = e.clientY;
+      edgeX = edgeAmount(e.clientX / innerWidth);
+      edgeY = edgeAmount(e.clientY / innerHeight);
+    }
+    if (!running) return;
+    movesSeen++;
+    if (!locked) mcheck.followPx += Math.abs(mx) + Math.abs(my);
+    yaw -= mx * 0.0022 * sens;
+    pitch = Math.max(-1.55, Math.min(1.55, pitch - my * 0.0022 * sens));
+  });
+  // Turning speed near the edges: 0 in the middle, full at the edge. When the
+  // cursor slips out of the page through an edge (easy inside an embedded frame)
+  // the view keeps turning that way until the cursor comes back.
+  function edgeAmount(v) {
+    const EDGE = 0.14;
+    if (v < EDGE) return -Math.min(1, (EDGE - v) / EDGE);
+    if (v > 1 - EDGE) return Math.min(1, (v - 1 + EDGE) / EDGE);
+    return 0;
+  }
+  addEventListener('mouseout', e => {
+    if (e.relatedTarget) return;
+    edgeX = Math.sign(edgeX); edgeY = Math.sign(edgeY);
+    lastMX = lastMY = null;
+  });
+  function turnKeys(dt) {
+    if (lastPointerType === 'touch') edgeX = edgeY = 0;
+    const tx = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0) + (locked ? 0 : edgeX);
+    const ty = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0) + (locked ? 0 : edgeY);
+    yaw -= tx * 3 * sens * dt;
+    pitch = Math.max(-1.55, Math.min(1.55, pitch - ty * 1.8 * sens * dt));
+  }
+  // ---------- touch controls ----------
+  const touchEl = document.getElementById('touch'), stickEl = document.getElementById('stick'), knobEl = document.getElementById('knob');
+  const stick = { id: null, x: 0, y: 0, mag: 0, cx: 0, cy: 0 };
+  const looks = new Map();                 // pointerId -> last position of a look finger
+  let touchUI = false;
+  function setTouchUI(on) {
+    touchUI = on;
+    document.body.classList.toggle('touch', on);
+    document.getElementById('keyshelp').hidden = on;
+    document.getElementById('touchhelp').hidden = !on;
+    document.getElementById('mouserow').hidden = on;
+    document.getElementById('senslabel').textContent = on ? 'Look sensitivity' : 'Mouse sensitivity';
+    if (running) touchEl.hidden = !on;
+  }
+  function hideTouch() {
+    touchEl.hidden = true; stickEl.hidden = true;
+    stick.id = null; stick.x = stick.y = stick.mag = 0; looks.clear();
+    for (const k of ['Space', 'KeyC']) keys[k] = false;
+    touchEl.querySelectorAll('.on').forEach(b => b.classList.remove('on'));
+  }
+  if (matchMedia('(pointer: coarse)').matches) setTouchUI(true);
+  addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch' && !touchUI) setTouchUI(true);
+    else if (e.pointerType === 'mouse' && touchUI && !matchMedia('(pointer: coarse)').matches) setTouchUI(false);   // touchscreen laptop back on the mouse
+  }, true);
+  touchEl.addEventListener('pointerdown', e => {
+    if (e.target.closest('.tbtn')) return;
+    e.preventDefault();
+    if (e.clientX < innerWidth * 0.45 && stick.id === null) {
+      Object.assign(stick, { id: e.pointerId, cx: e.clientX, cy: e.clientY, x: 0, y: 0, mag: 0 });
+      stickEl.style.left = e.clientX + 'px'; stickEl.style.top = e.clientY + 'px';
+      knobEl.style.transform = ''; stickEl.hidden = false;
+    } else {
+      looks.set(e.pointerId, [e.clientX, e.clientY]);
+    }
+  });
+  touchEl.addEventListener('pointermove', e => {
+    if (e.pointerId === stick.id) {
+      const RAD = 56;
+      let dx = e.clientX - stick.cx, dy = e.clientY - stick.cy;
+      const L = Math.hypot(dx, dy);
+      if (L > RAD) { dx *= RAD / L; dy *= RAD / L; }
+      stick.x = dx / RAD; stick.y = dy / RAD; stick.mag = Math.min(1, L / RAD);
+      knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
+      stickEl.classList.toggle('sprint', stick.mag > 0.85 && stick.y < -0.3);
+    } else if (looks.has(e.pointerId) && running) {
+      const [lx, ly] = looks.get(e.pointerId);
+      yaw -= (e.clientX - lx) * 0.006 * sens;
+      pitch = Math.max(-1.55, Math.min(1.55, pitch - (e.clientY - ly) * 0.006 * sens));
+      looks.set(e.pointerId, [e.clientX, e.clientY]);
+    }
+  });
+  const endTouch = e => {
+    if (e.pointerId === stick.id) { stick.id = null; stick.x = stick.y = stick.mag = 0; stickEl.hidden = true; }
+    looks.delete(e.pointerId);
+  };
+  touchEl.addEventListener('pointerup', endTouch);
+  touchEl.addEventListener('pointercancel', endTouch);
+  function holdButton(id, key, onDown) {
+    const el = document.getElementById(id);
+    el.addEventListener('pointerdown', e => { e.preventDefault(); keys[key] = true; el.classList.add('on'); if (onDown) onDown(); });
+    const up = () => { keys[key] = false; el.classList.remove('on'); };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  }
+  holdButton('t-jump', 'Space', () => { if (running) p.buffer = BUFFER; });
+  holdButton('t-slide', 'KeyC');
+  document.getElementById('t-pause').addEventListener('click', () => pause());
+  document.getElementById('t-reset').addEventListener('click', () => { if (running) respawn(false); });
+
+  addEventListener('resize', () => {
+    renderer.setSize(innerWidth, innerHeight);
+    camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  });
+
+  // ---------- loop ----------
+  const tEl = document.getElementById('t'), tlEl = document.getElementById('tl'), dEl = document.getElementById('d');
+  const cEl = document.getElementById('c'), vEl = document.getElementById('v');
+  let last = performance.now(), clock = 0;
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    if (running) {
+      clock += dt; time += dt;
+      turnKeys(dt);
+      // substeps keep fast falls from tunnelling through thin beams
+      const n = 3;
+      for (let i = 0; i < n; i++) update(dt / n, clock - dt + dt * (i + 1) / n);
+      record(dt);
+    } else {
+      update(0, clock);
+    }
+    if (locked && running) {
+      lockTime += dt;
+      if (lockTime > 6 && movesSeen === lockMoves && !hinted) {
+        hinted = true;
+        toast('View not turning? Esc, then Follow cursor', '#a89c93', 4500);
+      }
+    }
+    if (!mcheckEl.hidden) mcheckEl.textContent = mouseReport();
+    tlEl.textContent = practice ? 'Practice' : 'Time';
+    tEl.textContent = fmt(time); dEl.textContent = falls;
+    cEl.textContent = cpReached + ' / ' + checkpoints.length;
+    vEl.textContent = Math.hypot(p.vx, p.vz).toFixed(1);
+    if (wind) {
+      const sp = running ? Math.hypot(p.vx, p.vy, p.vz) : 0;
+      wind.g.gain.setTargetAtTime(Math.min(0.35, 0.015 + sp * sp * 0.0012), ac.currentTime, 0.15);
+      wind.lp.frequency.setTargetAtTime(250 + sp * 70, ac.currentTime, 0.15);
+    }
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  showBest();
+  respawn(false);
+  requestAnimationFrame(frame);
+
+  // hooks for the automated course test (only with #test in the address)
+  if (location.hash === '#test') {
+    window.rooftop = {
+      p, boxes, checkpoints, goal, keys, update, respawn, startFrom, pause,
+      get yaw() { return yaw; }, set yaw(v) { yaw = v; },
+      get pitch() { return pitch; },
+      get running() { return running; }, set running(v) { running = v; },
+      get finished() { return finished; }, get time() { return time; },
+      get locked() { return locked; }, get mouseMode() { return mouseMode; },
+      get cpReached() { return cpReached; }, get falls() { return falls; },
+      setSpawn(i) { spawn = i ? spawnAt(checkpoints[i - 1]) : { x: 0, y: 0, z: 2, yaw: 0 }; respawn(false); },
+    };
+  }
+})();
+</script>
+</body>
+</html>
