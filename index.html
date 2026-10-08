@@ -55,6 +55,8 @@
   button { font: 700 15px "JetBrains Mono", monospace; letter-spacing: .1em; text-transform: uppercase; padding: 14px 20px; border: 0; border-radius: 4px; background: var(--glow); color: #1a1424; cursor: pointer; justify-self: start; }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
   #best { color: var(--cp); }
+  #ownpage { color: var(--cp); font-size: 13px; text-underline-offset: 3px; justify-self: start; }
+  #ownpage:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
   .starts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .starts .label, .row label { width: 100%; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
   .starts button { font-size: 13px; letter-spacing: 0; padding: 6px 0; width: 36px; text-align: center; background: var(--chip); color: var(--ink); border: 1px solid var(--line); }
@@ -112,6 +114,7 @@
     <div class="col">
       <h1>Rooftop<br><span>Run</span></h1>
       <button id="go" type="button">Play</button>
+      <a id="ownpage" href="https://lennify44.github.io/Rooftop-run/" target="_blank" rel="noopener" hidden>Play in its own tab (full mouse lock) ↗</a>
       <p id="msg">Nine sections of pillars, beams, moving slabs, a wall run, a chimney, bounce pads and a slide roof above a city that isn't there anymore. Reach the gold roof. Long gaps need a sprint jump from the very edge; before small targets, hold S in the air to brake. The last gap needs a slide jump.</p>
       <p id="best"></p>
       <div class="starts" id="starts"><span class="label">Practice from checkpoint (no best time)</span></div>
@@ -729,6 +732,11 @@
   document.getElementById('m-capture').addEventListener('click', () => setMouseMode('capture'));
   document.getElementById('m-follow').addEventListener('click', () => setMouseMode('follow'));
   renderMouseUI();
+  // Embedded in another page (claude.ai), Firefox can grant the mouse lock without holding the
+  // pointer; the game's own page gets a working lock.
+  let framed = true;
+  try { framed = window.top !== window.self; } catch {}
+  document.getElementById('ownpage').hidden = !framed;
 
   function start() {
     if (finished) { startFrom(0); return; }
