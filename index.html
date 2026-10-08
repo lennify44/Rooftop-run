@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Rooftop Run</title>
-<meta name="description" content="A first-person parkour run over the rooftops: sprint, wall-run, wall-jump and slide through nine sections.">
+<meta name="description" content="A parkour run over the rooftops in third or first person: run, wall-run, wall-jump and slide through nine sections and find the lanterns.">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1a1424">
 <meta name="mobile-web-app-capable" content="yes">
@@ -44,6 +44,9 @@
   #menu .card { margin: auto; width: 100%; max-width: 920px; padding-block: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 56px; align-items: start; }
   #menu .col { display: grid; gap: 18px; min-width: 0; }
   body:not(.playing) #stats, body:not(.playing) #cross { visibility: hidden; }
+  body.third #cross { display: none; }
+  #fovv { font-variant-numeric: tabular-nums; }
+  .row .label kbd { font-size: 10px; padding: 0 5px; margin-left: 4px; }
   @media (max-height: 520px) {
     #menu h1 { font-size: 44px; }
     #menu .card { padding-block: 12px; gap: 12px 40px; }
@@ -75,18 +78,27 @@
   .seg button:last-child { border-radius: 0 4px 4px 0; border-left: 0; }
   .seg button[aria-pressed="true"] { background: var(--glow); border-color: var(--glow); color: #1a1424; }
   .note { width: 100%; font-size: 12px; line-height: 1.5; color: var(--dim); }
-  body.touch #stats { right: 130px; }
-  #touch { position: fixed; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
-  #stick { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 2px solid rgba(243, 236, 226, .35); background: rgba(26, 20, 36, .25); pointer-events: none; }
+  body.touch #stats { right: 190px; }
+  /* Touch, laid out like Fire Escape: the halves of the screen take the input; the drawn
+     stick and buttons are guides. */
+  #touch { position: fixed; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  #touch .zone { position: absolute; top: 0; bottom: 0; width: 50%; touch-action: none; }
+  #zone-l { left: 0; }
+  #zone-r { right: 0; }
+  #stick, #touch .acts { pointer-events: none; }
+  #stick { position: absolute; left: calc(24px + env(safe-area-inset-left, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(243, 236, 226, .3); background: rgba(26, 20, 36, .2); opacity: .5; }
+  #stick.on { opacity: 1; }
   #stick.sprint { border-color: var(--glow); }
-  #knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(243, 236, 226, .55); }
-  #touch .tbtn { position: absolute; padding: 0; border-radius: 50%; background: rgba(26, 20, 36, .45); border: 2px solid rgba(243, 236, 226, .45); color: var(--ink); font: 700 12px "JetBrains Mono", monospace; letter-spacing: .06em; text-transform: uppercase; touch-action: none; }
-  #touch .tbtn.on { background: rgba(255, 122, 61, .55); border-color: var(--glow); }
-  #t-jump { width: 88px; height: 88px; right: calc(24px + env(safe-area-inset-right, 0px)); bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
-  #t-slide { width: 64px; height: 64px; right: calc(128px + env(safe-area-inset-right, 0px)); bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
-  #touch .tsmall { width: 44px; height: 44px; border-radius: 8px; top: calc(14px + env(safe-area-inset-top, 0px)); }
+  #knob { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%; background: rgba(243, 236, 226, .5); }
+  #touch .acts { position: absolute; right: calc(20px + env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 200px; height: 156px; }
+  #touch .tbtn { position: absolute; display: grid; place-items: center; border-radius: 50%; font: 700 12px "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: rgba(243, 236, 226, .85); background: rgba(26, 20, 36, .3); border: 2px solid rgba(243, 236, 226, .4); }
+  #touch .tbtn.on { background: rgba(255, 122, 61, .5); border-color: var(--glow); color: var(--ink); }
+  #b-jump { right: 0; bottom: 0; width: 100px; height: 100px; }
+  #b-slide { left: 0; top: 0; width: 84px; height: 84px; }
+  #touch .tsmall { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); width: 50px; height: 40px; padding: 0; border-radius: 8px; font: 700 12px "JetBrains Mono", monospace; letter-spacing: .04em; color: var(--ink); background: rgba(26, 20, 36, .45); border: 2px solid rgba(243, 236, 226, .4); touch-action: none; }
   #t-pause { right: calc(16px + env(safe-area-inset-right, 0px)); }
-  #t-reset { right: calc(70px + env(safe-area-inset-right, 0px)); }
+  #t-reset { right: calc(72px + env(safe-area-inset-right, 0px)); }
+  #t-cam { right: calc(128px + env(safe-area-inset-right, 0px)); }
   #mcheck { position: absolute; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px; font-size: 12px; line-height: 1.5; color: var(--ink); text-shadow: 0 1px 3px #000; }
   #err { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 10; padding: 10px 14px; border-radius: 4px; background: #7a1b14; color: #fff; font-size: 13px; line-height: 1.5; }
 </style>
@@ -94,11 +106,13 @@
 <body>
 
 <div id="touch" hidden>
-  <div id="stick" hidden><div id="knob"></div></div>
-  <button type="button" class="tbtn" id="t-jump">Jump</button>
-  <button type="button" class="tbtn" id="t-slide">Slide</button>
-  <button type="button" class="tbtn tsmall" id="t-reset" aria-label="Back to checkpoint">R</button>
-  <button type="button" class="tbtn tsmall" id="t-pause" aria-label="Pause">II</button>
+  <div class="zone" id="zone-l"></div>
+  <div class="zone" id="zone-r"></div>
+  <div id="stick"><div id="knob"></div></div>
+  <div class="acts"><div class="tbtn" id="b-slide">Slide</div><div class="tbtn" id="b-jump">Jump</div></div>
+  <button type="button" class="tsmall" id="t-cam" aria-label="Switch camera">Cam</button>
+  <button type="button" class="tsmall" id="t-reset" aria-label="Back to checkpoint">R</button>
+  <button type="button" class="tsmall" id="t-pause" aria-label="Pause">II</button>
 </div>
 
 <div id="hud">
@@ -106,6 +120,7 @@
     <div><span id="tl">Time</span><b id="t">0.00</b></div>
     <div>Falls<b id="d">0</b></div>
     <div>Checkpoint<b id="c">0 / 8</b></div>
+    <div>Lanterns<b id="ln">0 / 9</b></div>
     <div>Speed<b id="v">0.0</b></div>
   </div>
   <div id="cross"></div>
@@ -119,24 +134,48 @@
       <h1>Rooftop<br><span>Run</span></h1>
       <button id="go" type="button">Play</button>
       <a id="ownpage" href="https://lennify44.github.io/Rooftop-run/" target="_blank" rel="noopener" hidden>Play in its own tab (full mouse lock) ↗</a>
-      <p id="msg">Nine sections of pillars, beams, moving slabs, a wall run, a chimney, bounce pads and a slide roof above a city that isn't there anymore. Reach the gold roof. Long gaps need a sprint jump from the very edge; before small targets, hold S in the air to brake. The last gap needs a slide jump.</p>
+      <p id="msg">Nine sections of pillars, beams, moving slabs, a wall run, a chimney, bounce pads and a slide roof above a city that isn't there anymore. Reach the gold roof. Each section hides a paper lantern where only a full, well-aimed jump reaches it. Long gaps need a jump from the very edge; before small targets, brake in the air. The last gap needs a slide jump.</p>
       <p id="best"></p>
       <div class="starts" id="starts"><span class="label">Practice from checkpoint (no best time)</span></div>
     </div>
     <div class="col">
-      <p id="touchhelp" hidden>Left thumb: drag anywhere on the left to move, push to the edge to sprint. Right thumb: drag to look. Hold Jump for full height; pull the stick back in the air to brake; Slide while sprinting slides under bars. Turn your phone sideways for the widest view. On Android the game goes full screen when you press Play; on iPhone, use Share, then Add to Home Screen, for full screen.</p>
+      <div class="keys" id="touchhelp" hidden>
+        <kbd>Left half</kbd><span>put your thumb down anywhere and slide to move; push to the edge to run. Pull back in the air to brake.</span>
+        <kbd>Right half</kbd><span>tap anywhere to jump, hold for height. Drag to look around (the top strip only looks).</span>
+        <kbd>Slide</kbd><span>slide while running, crouch when standing. Roll your thumb from Slide onto the rest of the right half to jump out of the slide and keep its speed.</span>
+        <kbd>Cam · R · II</kbd><span>camera, back to checkpoint, pause</span>
+        <span></span><span>Turn your phone sideways. Android goes full screen on Play; on iPhone use Share, then Add to Home Screen.</span>
+      </div>
       <div class="keys" id="keyshelp">
-        <kbd>WASD</kbd><span>move</span>
+        <kbd>WASD</kbd><span>move; forward runs. S in the air brakes.</span>
         <kbd>Mouse</kbd><span>look (arrow keys work too)</span>
-        <kbd>Space</kbd><span>jump; hold for full height</span>
-        <kbd>Shift</kbd><span>sprint</span>
-        <kbd>C</kbd><span>slide while sprinting, crouch otherwise</span>
-        <kbd>W+Shift</kbd><span>in the air along a wall: wall run</span>
-        <kbd>Space</kbd><span>in the air on a wall: wall jump</span>
+        <kbd>Space Z C J</kbd><span>jump: tap for a hop, hold for height. Against a wall in the air: wall jump.</span>
+        <kbd>X Shift K</kbd><span>slide while running, crouch when standing. Jump during a slide to keep its speed.</span>
+        <kbd>W</kbd><span>in the air along a pink wall: wall run</span>
+        <kbd>V</kbd><span>third or first person</span>
         <kbd>R</kbd><span>back to checkpoint</span>
         <kbd>P / Esc</kbd><span>pause</span>
-        <kbd>M</kbd><span>sound on or off</span>
-        <kbd>F2</kbd><span>show the mouse check</span>
+        <kbd>M · F2</kbd><span>sound on or off · mouse check</span>
+        <kbd>Gamepad</kbd><span>A/Y jump · B/X/RB/RT slide · right stick look · LB camera · Start pause · Select checkpoint</span>
+      </div>
+      <div class="row">
+        <span class="label">Camera <kbd>V</kbd></span>
+        <div class="seg" role="group" aria-label="Camera">
+          <button type="button" id="cam-third">Third person</button>
+          <button type="button" id="cam-first">First person</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label">Up and down look</span>
+        <div class="seg" role="group" aria-label="Up and down look">
+          <button type="button" id="inv-off">Normal</button>
+          <button type="button" id="inv-on">Inverted</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="fov">Field of view</label>
+        <input type="range" id="fov" min="60" max="100" step="1" value="78">
+        <span id="fovv">78°</span>
       </div>
       <div class="row" id="mouserow">
         <span class="label">Mouse control</span>
@@ -216,6 +255,7 @@
     move: new THREE.MeshStandardMaterial({ color: 0xff7a3d, emissive: 0x6a2410, roughness: 0.5 }),
     goal: new THREE.MeshStandardMaterial({ color: 0xffd35a, emissive: 0x8a5a00, roughness: 0.4, metalness: 0.4 }),
     wall: new THREE.MeshStandardMaterial({ color: 0x6d5a7a, roughness: 0.8 }),
+    runwall: new THREE.MeshStandardMaterial({ color: 0x8a5a7e, emissive: 0x2a0c1e, roughness: 0.6 }),   // the wall you can run along
     pad: new THREE.MeshStandardMaterial({ color: 0xff4fa3, emissive: 0x7a1048, roughness: 0.4 }),
     bar: new THREE.MeshStandardMaterial({ color: 0xd9443a, emissive: 0x3a0c08, roughness: 0.6 }),
     city: new THREE.MeshStandardMaterial({ color: 0x2a2036, roughness: 1 }),
@@ -263,37 +303,38 @@
   // A · pillars
   let b = piece(startPad, '-z', 4.0, 0, 1.6, 1.6, 0.5);
   b = piece(b, '-z', 4.6, 1.5, 1.4, 1.4, 1.0);
-  b = piece(b, '-z', 5.0, -2.5, 1.2, 1.2, 1.5);
-  b = piece(b, '-z', 5.8, 1.5, 1.0, 1.0, 1.5);
+  b = piece(b, '-z', 5.0, -2.5, 1.2, 1.2, 1.5); const a3 = b;
+  b = piece(b, '-z', 5.8, 1.5, 1.0, 1.0, 1.5); const a4 = b;
   const cp1 = checkpoint(b, '-z', 6.0, -0.5, 3, 3, 1.0);
   // B · beams
-  b = piece(cp1, '-z', 1.2, 0, 0.5, 10, 1.0, 0.5, 'beam');
-  b = piece(b, '-z', 4.2, 1.6, 0.5, 8, 1.4, 0.5, 'beam');
+  b = piece(cp1, '-z', 1.2, 0, 0.5, 10, 1.0, 0.5, 'beam'); const beam1 = b;
+  b = piece(b, '-z', 4.2, 1.6, 0.5, 8, 1.4, 0.5, 'beam'); const beam2 = b;
   b = piece(b, '-z', 3.4, -1.2, 0.45, 0.45, 1.8, 6, 'beam');
   const cp2 = checkpoint(b, '-z', 5.2, -0.8, 4, 4, 2.0);
   // C · climb, one metre up per jump
   b = piece(cp2, '-x', 3.5, -1.0, 1.2, 1.2, 3.0, 12);
-  b = piece(b, '-x', 4.0, 1.4, 1.0, 1.0, 4.0, 12);
-  b = piece(b, '-x', 4.3, -1.4, 1.0, 1.0, 5.0, 12);
+  b = piece(b, '-x', 4.0, 1.4, 1.0, 1.0, 4.0, 12); const c2 = b;
+  b = piece(b, '-x', 4.3, -1.4, 1.0, 1.0, 5.0, 12); const c3 = b;
   b = piece(b, '-x', 4.6, 1.4, 0.9, 0.9, 6.0, 12);
   b = piece(b, '-x', 4.8, -1.4, 0.8, 0.8, 7.1, 12);
   const cp3 = checkpoint(b, '-x', 5.6, 0.7, 3, 3, 6.8);
   // D · moving slabs: wait for the right moment
   b = piece(cp3, '-x', 4.0, 0, 2.4, 2.4, 6.8, 0.6, 'move', mv('x', 2.5, 1.2, 0));
-  b = piece(b, '-x', 4.0, 0, 2.2, 2.2, 7.2, 0.6, 'move', mv('z', 3.0, 1.4, 1.5));
+  b = piece(b, '-x', 4.0, 0, 2.2, 2.2, 7.2, 0.6, 'move', mv('z', 3.0, 1.4, 1.5)); const slab2 = b;
   b = piece(b, '-x', 4.0, 0, 2.0, 2.0, 7.6, 0.6, 'move', mv('x', 2.0, 1.9, 0.4));
   const cp4 = checkpoint(b, '-x', 4.0, 0, 3, 3, 7.4);
   // E · needles: keep your speed
   b = piece(cp4, '+z', 4.6, 0, 0.6, 0.6, 7.8, 14);
   b = piece(b, '+z', 5.0, 1.2, 0.6, 0.6, 8.2, 14);
   b = piece(b, '+z', 5.2, -1.5, 0.6, 0.6, 8.6, 14);
-  b = piece(b, '+z', 5.6, 1.2, 0.5, 0.5, 8.6, 14);
-  b = piece(b, '+z', 5.4, -1.0, 0.5, 0.5, 9.0, 14);
+  b = piece(b, '+z', 5.6, 1.2, 0.5, 0.5, 8.6, 14); const n4 = b;
+  b = piece(b, '+z', 5.4, -1.0, 0.5, 0.5, 9.0, 14); const n5 = b;
   b = piece(b, '+z', 6.0, 0.6, 0.5, 0.5, 9.0, 14);
   const cp5 = checkpoint(b, '+z', 5.0, -0.3, 4, 4, 9.0);
   cp5.face = [cp5.x, cp5.z + 10];
   // F · wall run: sprint forward along the wall while in the air
-  const wall = P(cp5.x - cp5.w / 2 - 1.3, top(cp5) + 6, cp5.z + cp5.d / 2 + 1.5 + 8, 0.6, 16, 10, 'wall');
+  const wall = P(cp5.x - cp5.w / 2 - 1.3, top(cp5) + 6, cp5.z + cp5.d / 2 + 1.5 + 8, 0.6, 16, 10, 'wall', { runnable: true });
+  wall.mesh.material = mats.runwall;
   const land = piece(wall, '+z', 3.0, 1.8, 6, 4, top(cp5) - 0.5, 1.2);
   // G · chimney: wall-jump between the two walls
   const cp6 = checkpoint(land, '+z', 2.0, 1.5, 2.2, 5, top(land) + 0.5);
@@ -304,8 +345,8 @@
   // H · bounce pads
   b = piece(exit, '+z', 3.2, 0, 2, 2, top(exit) - 2.5, 0.5, 'pad');
   const cp7 = checkpoint(b, '+z', 4.75, 0, 2.5, 2.5, top(b) + 4.0);
-  b = piece(cp7, '+x', 2.95, 4.5, 1.6, 1.6, top(cp7) - 2.5, 0.5, 'pad');
-  b = piece(b, '+x', 4.0, 3.5, 1.4, 1.4, top(b) + 3.0, 0.5, 'pad');
+  b = piece(cp7, '+x', 2.95, 4.5, 1.6, 1.6, top(cp7) - 2.5, 0.5, 'pad'); const pad2 = b;
+  b = piece(b, '+x', 4.0, 3.5, 1.4, 1.4, top(b) + 3.0, 0.5, 'pad'); const pad3 = b;
   const cp8 = checkpoint(b, '+x', 3.8, 3.5, 4, 5, top(b) + 3.5);
   // I · slide roof: slide under the red bars, then slide-jump the last gap
   const roof = piece(cp8, '+x', 0, 0, 16.5, 5, top(cp8), 1.2);
@@ -317,6 +358,47 @@
     for (const s of [-1, 1]) P(gx, top(roof) + 2.0, roof.z + s * 3.05, 0.4, 0.4, 14, 'bar');
   }
   const goal = piece(roof, '+x', 7.8, 0, 5, 5, top(roof), 2, 'goal');
+
+  // ---------- lanterns: one per section, where only a full, well-aimed jump reaches ----------
+  // A full jump's body centre peaks about 2.5 m above the take-off surface, a short hop's about
+  // 1.7 m, so a lantern 2.45 m up over a gap takes the real jump. Collected within 0.8 m.
+  const lanterns = [];
+  function gapMid(a, c) {                        // middle of the gap between two pieces, seen from above
+    const ax = Math.max(a.x - a.w / 2, Math.min(a.x + a.w / 2, c.x)), az = Math.max(a.z - a.d / 2, Math.min(a.z + a.d / 2, c.z));
+    const cx = Math.max(c.x - c.w / 2, Math.min(c.x + c.w / 2, ax)), cz = Math.max(c.z - c.d / 2, Math.min(c.z + c.d / 2, az));
+    return [(ax + cx) / 2, (az + cz) / 2];
+  }
+  const lantern = (x, y, z, where) => lanterns.push({ x, y, z, where, id: lanterns.length, got: false });
+  const overGap = (a, c, where, up = 2.45) => { const [x, z] = gapMid(a, c); lantern(x, top(a) + up, z, where); };
+  overGap(a3, a4, 'pillars');
+  lantern((beam1.x + beam2.x) / 2, top(beam1) + 2.45, (beam1.z - beam1.d / 2 + beam2.z + beam2.d / 2) / 2, 'beams');
+  overGap(c2, c3, 'climb');
+  lantern(slab2.x, top(slab2) + 1.2, slab2.base, 'moving slabs');                 // ride the slab through it
+  overGap(n4, n5, 'needles');
+  lantern(wall.x + wall.w / 2 + 0.35, top(cp5) + 2.3, wall.z + 2, 'wall run');
+  lantern(cp6.x, top(exit) + 0.6, cp6.z + 0.9, 'chimney');
+  { const [x, z] = gapMid(pad2, pad3); lantern(x, top(pad2) + 4.6, z, 'bounce pads'); }
+  overGap(roof, goal, 'slide roof');
+  const LANTERN_R = 0.8;
+  const lanternBody = new THREE.MeshStandardMaterial({ color: 0xffc46b, emissive: 0xff9a2e, emissiveIntensity: 1.1, roughness: 0.5 });
+  const lanternCap = new THREE.MeshStandardMaterial({ color: 0x3a2a30, roughness: 0.8 });
+  const glowTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    r.addColorStop(0, 'rgba(255, 205, 130, 0.9)'); r.addColorStop(0.4, 'rgba(255, 150, 60, 0.3)'); r.addColorStop(1, 'rgba(255, 120, 40, 0)');
+    g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  })();
+  for (const l of lanterns) {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.32, 12), lanternBody);
+    const capT = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.19, 0.08, 12), lanternCap); capT.position.y = 0.2;
+    const capB = capT.clone(); capB.rotation.x = Math.PI; capB.position.y = -0.2;
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    glow.scale.set(1.8, 1.8, 1);
+    g.add(body, capT, capB, glow); g.position.set(l.x, l.y, l.z);
+    scene.add(g); l.mesh = g;
+  }
 
   // light column over the goal so it can be found from anywhere
   const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 240, 12, 1, true),
@@ -390,6 +472,7 @@
     pad: () => tone(160, 900, 0.3, 'sine', 0.22),
     cp: () => { tone(660, 660, 0.25, 'sine', 0.15); tone(990, 990, 0.4, 'sine', 0.12, 0.1); },
     fall: () => tone(480, 60, 0.6, 'sawtooth', 0.05),
+    lantern: () => { tone(880, 1320, 0.25, 'sine', 0.12); tone(1320, 1760, 0.35, 'triangle', 0.07, 0.08); },
     win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, f, 0.45, 'triangle', 0.12, i * 0.11)),
   };
   function toggleMute() {
@@ -413,19 +496,35 @@
     crouch: false, slideT: 0, slideV: 0, sdx: 0, sdz: 0, slideCD: 0,
   };
   let yaw = 0, pitch = 0, roll = 0, bob = 0, stepPhase = 0;
+  // view settings: third or first person, inverted vertical look, field of view
+  let cam = 'third', invertY = false, baseFov = 78;
+  try {
+    if (localStorage.getItem('rooftop-cam') === 'first') cam = 'first';
+    invertY = localStorage.getItem('rooftop-invert') === '1';
+    baseFov = Math.min(100, Math.max(60, +localStorage.getItem('rooftop-fov') || 78));
+  } catch {}
   let spawn = { x: 0, y: 0, z: 2, yaw: 0 };
   let cpReached = 0, falls = 0, time = 0, running = false, finished = false, practice = 0;
 
+  // Jump and slide keys as in Fire Escape (its dash keys slide here). Running is automatic.
+  const JUMP_KEYS = ['Space', 'KeyZ', 'KeyY', 'KeyC', 'KeyJ'], SLIDE_KEYS = ['KeyX', 'ShiftLeft', 'ShiftRight', 'KeyK'];
   const keys = {};
+  const touchIn = { jump: false, slide: false };                    // right half of the touch screen
+  const pad = { jump: false, slide: false };                        // gamepad buttons
+  const ana = { x: 0, y: 0, mag: 0 };                               // analog move: touch stick or gamepad stick
+  const jumpHeld = () => JUMP_KEYS.some(k => keys[k]) || touchIn.jump || pad.jump;
+  const slideHeld = () => SLIDE_KEYS.some(k => keys[k]) || touchIn.slide || pad.slide;
+  function pressJump() { if (running) p.buffer = BUFFER; }
   const GAME_KEYS = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
   addEventListener('keydown', e => {
     if (running && GAME_KEYS.has(e.code)) e.preventDefault();
     keys[e.code] = true;
     if (e.repeat) return;
     if (e.code === 'KeyM') toggleMute();
+    if (e.code === 'KeyV') toggleCam();
     if (e.code === 'F2') { e.preventDefault(); mcheckEl.hidden = !mcheckEl.hidden; }
     if (!running) return;
-    if (e.code === 'Space') p.buffer = BUFFER;
+    if (JUMP_KEYS.includes(e.code)) pressJump();
     if (e.code === 'KeyR') respawn(false);
     if (e.code === 'KeyP' || e.code === 'Escape') { if (locked) document.exitPointerLock?.(); else pause(); }
   });
@@ -465,7 +564,7 @@
         p[axis] = amt > 0 ? b[axis] - half - R - 1e-4 : b[axis] + half + R + 1e-4;
         if (axis === 'x') p.vx = 0; else p.vz = 0;
         if (b.kind === 'wall') {
-          p.wall = axis === 'x' ? { nx: amt > 0 ? -1 : 1, nz: 0 } : { nx: 0, nz: amt > 0 ? -1 : 1 };
+          p.wall = axis === 'x' ? { nx: amt > 0 ? -1 : 1, nz: 0, runnable: !!b.runnable } : { nx: 0, nz: amt > 0 ? -1 : 1, runnable: !!b.runnable };
           p.wallT = 0.15;
         }
       }
@@ -508,10 +607,10 @@
 
     let f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
     let s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
-    let sprinting = keys.ShiftLeft || keys.ShiftRight;
-    if (stick.id !== null && stick.mag > 0.2) {          // touch stick: pushed to the edge sprints
-      f = -stick.y; s = stick.x;
-      if (stick.mag > 0.85 && f > 0.3) sprinting = true;
+    let sprinting = f > 0;                                 // keyboard: forward always runs
+    if (ana.mag > 0.2) {                                   // stick: pushed to the edge runs, less walks
+      f = -ana.y; s = ana.x;
+      sprinting = ana.mag > 0.85 && f > 0.3;
     }
     let wx = -Math.sin(yaw) * f + Math.cos(yaw) * s;
     let wz = -Math.cos(yaw) * f - Math.sin(yaw) * s;
@@ -520,14 +619,15 @@
 
     // crouch and slide
     p.slideCD -= dt;
-    if (keys.KeyC && !p.crouch) {
+    const slideKey = slideHeld();
+    if (slideKey && !p.crouch) {
       p.crouch = true; p.h = CH;
       if (p.ground && hs > WALK + 0.3 && p.slideCD <= 0) {
         p.slideT = SLIDE_T; p.slideV = Math.max(hs, SPRINT) + 3;
         p.sdx = p.vx / hs; p.sdz = p.vz / hs;
         sfx.slide();
       }
-    } else if (!keys.KeyC && p.crouch) {
+    } else if (!slideKey && p.crouch) {
       p.h = H;
       if (boxes.some(overlaps)) p.h = CH; else p.crouch = false;   // no headroom: stay down
     }
@@ -567,8 +667,8 @@
       p.buffer = 0; p.wallT = 0; p.run = WALLRUN_T;
       sfx.wall();
     }
-    // wall run: sprinting forward while touching a wall in the air
-    p.wallRunning = p.wallT > 0.1 && !p.ground && sprinting && f > 0 && p.run > 0;
+    // wall run: running forward in the air along a wall (and already moving fast, so a slow brush does not start one)
+    p.wallRunning = p.wallT > 0.1 && p.wall.runnable && !p.ground && sprinting && f > 0 && p.run > 0 && (p.wallRunning || hs > WALK + 1);
     if (p.wallRunning) {
       p.run -= dt;
       if (p.vy < -0.6) p.vy = -0.6;
@@ -576,7 +676,7 @@
       const along = p.wall.nx ? Math.sign(wz || -1) : Math.sign(wx || -1);
       if (p.wall.nx) p.vz = along * SPRINT; else p.vx = along * SPRINT;
     }
-    if (p.jumpCut && !keys.Space && p.vy > 3) p.vy -= G * dt * 1.2; // short hop on release
+    if (p.jumpCut && !jumpHeld() && p.vy > 3) p.vy -= G * dt * 1.2; // short hop on release
 
     p.vy -= G * dt * (p.wallRunning ? 0.15 : 1);
     if (p.vy < -40) p.vy = -40;
@@ -593,6 +693,10 @@
       if (!boxes.some(overlaps)) p.y = saveY; else { p.y = saveY; moveAxis('y', -0.05); }
     }
     if (p.ground) p.jumpCut = false;
+
+    for (const l of lanterns) {
+      if (!l.got && Math.hypot(l.x - p.x, l.y - (p.y + p.h / 2), l.z - p.z) < LANTERN_R) collectLantern(l);
+    }
 
     if (p.y < -12 || p.y < spawn.y - 9) { respawn(true); toast('Fell', '#ff7a3d'); }
 
@@ -618,11 +722,18 @@
     }
     p.eye += ((p.h - 0.15) - p.eye) * Math.min(1, dt * 14);
     p.dip *= Math.max(0, 1 - dt * 8);
-    const rollT = calm ? 0 : p.wallRunning ? 0.1 * Math.sign(p.wall.nx * Math.cos(yaw) - p.wall.nz * Math.sin(yaw)) : p.slideT > 0 ? 0.035 : 0;
-    roll += (rollT - roll) * Math.min(1, dt * 10);
-    camera.position.set(p.x, p.y + p.eye - p.dip + (calm ? 0 : Math.sin(bob * 2) * 0.04 * Math.min(1, hs2 / 5)), p.z);
-    camera.rotation.set(pitch, yaw, roll);
-    const fov = 78 + (calm ? 0 : Math.max(0, hs2 - WALK) * 1.4);
+    if (cam === 'first') {
+      const rollT = calm ? 0 : p.wallRunning ? 0.1 * Math.sign(p.wall.nx * Math.cos(yaw) - p.wall.nz * Math.sin(yaw)) : p.slideT > 0 ? 0.035 : 0;
+      roll += (rollT - roll) * Math.min(1, dt * 10);
+      camera.position.set(p.x, p.y + p.eye - p.dip + (calm ? 0 : Math.sin(bob * 2) * 0.04 * Math.min(1, hs2 / 5)), p.z);
+      camera.rotation.set(pitch, yaw, roll);
+      hero.group.visible = false;
+    } else {
+      thirdPersonCamera(dt);
+    }
+    poseRunner(hero, dt, hs2, p);
+    placeBlob();
+    const fov = baseFov + (calm ? 0 : Math.max(0, hs2 - WALK) * 1.4);
     if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
 
     sun.position.set(p.x - 30, 50, p.z + 20);
@@ -634,22 +745,153 @@
   const KEY = 'rooftop-best-v3', GHOST_DT = 0.05;
   function readBest() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch { return null; } }
   let bestRun = readBest(), splits = [], trail = [], trailT = 0;
+  // lanterns: collected this run, and every one ever found (kept across runs)
+  const FOUND_KEY = 'rooftop-lanterns-v1';
+  let runLanterns = 0, foundEver = new Set();
+  try { foundEver = new Set(JSON.parse(localStorage.getItem(FOUND_KEY)) || []); } catch {}
+  function collectLantern(l) {
+    l.got = true; l.mesh.visible = false; runLanterns++;
+    const isNew = !foundEver.has(l.id);
+    foundEver.add(l.id);
+    try { localStorage.setItem(FOUND_KEY, JSON.stringify([...foundEver])); } catch {}
+    sfx.lantern();
+    toast(`Lantern ${runLanterns} / ${lanterns.length}` + (isNew ? ' · new' : ''), '#ffc46b');
+  }
   function showBest() {
-    document.getElementById('best').textContent = bestRun ? 'Best run: ' + fmt(bestRun.time) + ' s · the blue ghost replays it' : '';
+    document.getElementById('best').textContent = (bestRun ? 'Best run: ' + fmt(bestRun.time) + ' s · the blue ghost replays it. ' : '') +
+      `Lanterns found over all runs: ${foundEver.size} / ${lanterns.length}`;
   }
 
-  const ghost = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.7, 0.6),
-    new THREE.MeshBasicMaterial({ color: 0x7fb8ff, transparent: true, opacity: 0.35, depthWrite: false }));
-  ghost.visible = false; scene.add(ghost);
+  // ---------- the runner (third person) ----------
+  // Blocky figure, 1.7 m like the hitbox, facing -z at rotation 0. Limbs hang from pivots:
+  // a positive x rotation swings a leg or arm forward.
+  function makeRunner(body, limbs, skin) {
+    const g = new THREE.Group(); g.rotation.order = 'YXZ';
+    const block = (w, h, d, m) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
+    const hips = new THREE.Group(); hips.position.y = 0.88; g.add(hips);
+    const torso = new THREE.Group(); hips.add(torso);
+    const chest = block(0.42, 0.56, 0.24, body); chest.position.y = 0.3; torso.add(chest);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), skin); head.position.y = 0.69; torso.add(head);
+    const limb = (w, h, m, x, y, parent) => {
+      const pivot = new THREE.Group(); pivot.position.set(x, y, 0);
+      const part = block(w, h, w, m); part.position.y = -h / 2; pivot.add(part); parent.add(pivot);
+      return pivot;
+    };
+    const r = { group: g, hips, torso, phase: 0, facing: 0,
+      armL: limb(0.11, 0.56, body, -0.28, 0.54, torso), armR: limb(0.11, 0.56, body, 0.28, 0.54, torso),
+      legL: limb(0.15, 0.88, limbs, -0.11, 0, hips), legR: limb(0.15, 0.88, limbs, 0.11, 0, hips) };
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    scene.add(g);
+    return r;
+  }
+  const hero = makeRunner(new THREE.MeshStandardMaterial({ color: 0xff7a3d, roughness: 0.7 }),
+    new THREE.MeshStandardMaterial({ color: 0x2b2238, roughness: 0.8 }), new THREE.MeshStandardMaterial({ color: 0xf3ece2, roughness: 0.6 }));
+  const ghostMat = new THREE.MeshBasicMaterial({ color: 0x7fb8ff, transparent: true, opacity: 0.35, depthWrite: false });
+  const ghost = makeRunner(ghostMat, ghostMat, ghostMat);
+  ghost.group.traverse(o => { o.castShadow = false; });
+  ghost.group.visible = false;
+
+  // pose from a movement state: { vx, vy, vz, ground, slideT, crouch, wallRunning, wall }
+  function poseRunner(r, dt, hs, st) {
+    r.group.position.set(st.x, st.y, st.z);
+    if (hs > 0.5) {
+      let d = Math.atan2(-st.vx, -st.vz) - r.facing;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      r.facing += d * Math.min(1, dt * 12);
+    }
+    let hipsY = 0.88, lean = Math.min(0.3, hs * 0.03), legA = 0, legB = 0, armA = 0, armB = 0, tilt = 0;
+    const swing = amp => { const w = Math.sin(r.phase) * amp; legA = w; legB = -w; armA = -w * 0.8; armB = w * 0.8; };
+    if (st.slideT > 0) {
+      hipsY = 0.32; lean = -1.1; legA = legB = 1.35; armA = 0.5; armB = -0.5;
+    } else if (st.crouch && st.ground) {
+      hipsY = 0.55; lean = 0.45; legA = legB = 0.6; armA = armB = 0.3;
+      if (hs > 0.5) { r.phase += hs * dt * 1.8; legA += Math.sin(r.phase) * 0.3; legB -= Math.sin(r.phase) * 0.3; }
+    } else if (st.wallRunning) {
+      r.phase += 9.2 * dt * 1.35; swing(0.9);
+      tilt = 0.35 * Math.sign(st.wall.nx * Math.cos(r.facing) - st.wall.nz * Math.sin(r.facing));
+    } else if (st.ground) {
+      if (hs > 0.5) { r.phase += hs * dt * 1.35; swing(Math.min(1, hs / 7) * 0.9); hipsY += Math.abs(Math.cos(r.phase)) * 0.04; }
+    } else if (st.vy > -5) {
+      legA = 0.8; legB = -0.35; armA = -0.6; armB = 0.9; lean = 0.15;      // jump: one knee up
+    } else {
+      legA = 0.3; legB = -0.2; armA = armB = 2.4;                            // falling: arms up
+    }
+    const k = Math.min(1, dt * 14), ease = (o, key, v) => { o[key] += (v - o[key]) * k; };
+    ease(r.hips.position, 'y', hipsY);
+    ease(r.torso.rotation, 'x', -lean);
+    ease(r.legL.rotation, 'x', legA); ease(r.legR.rotation, 'x', legB);
+    ease(r.armL.rotation, 'x', armB); ease(r.armR.rotation, 'x', armA);
+    r.group.rotation.y = r.facing;
+    ease(r.group.rotation, 'z', tilt);
+  }
+
+  // Camera behind the runner; pulled in instead of passing through anything solid.
+  const CAM_DIST = 4.6;
+  let camDist = CAM_DIST;
+  function rayHit(ox, oy, oz, dx, dy, dz, maxT) {
+    let best = maxT;
+    for (const b of boxes) {
+      let t0 = 0, t1 = best, miss = false;
+      for (const [o, d, lo, hi] of [[ox, dx, b.x - b.w / 2, b.x + b.w / 2], [oy, dy, b.y - b.h / 2, b.y + b.h / 2], [oz, dz, b.z - b.d / 2, b.z + b.d / 2]]) {
+        if (Math.abs(d) < 1e-9) { if (o < lo || o > hi) { miss = true; break; } continue; }
+        let a = (lo - o) / d, c = (hi - o) / d;
+        if (a > c) [a, c] = [c, a];
+        if (a > t0) t0 = a;
+        if (c < t1) t1 = c;
+        if (t0 > t1) { miss = true; break; }
+      }
+      if (!miss && t0 < best) best = t0;
+    }
+    return best;
+  }
+  const inside = (x, y, z) => boxes.some(b => Math.abs(x - b.x) < b.w / 2 && Math.abs(y - b.y) < b.h / 2 && Math.abs(z - b.z) < b.d / 2);
+  function thirdPersonCamera(dt) {
+    // pivot above the head, so the runner sits low in the picture and the way ahead stays clear;
+    // at head height when that point is inside something (sliding under a gate)
+    let ty = p.y + p.eye + 0.55;
+    if (inside(p.x, ty, p.z)) ty = p.y + p.eye - 0.1;
+    const cp = Math.cos(pitch), fx = -Math.sin(yaw) * cp, fy = Math.sin(pitch), fz = -Math.cos(yaw) * cp;
+    const hit = rayHit(p.x, ty, p.z, -fx, -fy, -fz, CAM_DIST + 0.3);
+    const want = hit < CAM_DIST + 0.3 ? Math.max(0.3, hit - 0.3) : CAM_DIST;
+    camDist = want < camDist ? want : camDist + (want - camDist) * Math.min(1, dt * 5);
+    camera.position.set(p.x - fx * camDist, ty - fy * camDist, p.z - fz * camDist);
+    camera.rotation.set(pitch, yaw, 0);
+    hero.group.visible = camDist > 1.0;
+  }
+
+  // a soft dark disc straight below the runner: shows where a jump will come down
+  const blob = new THREE.Mesh(new THREE.CircleGeometry(0.34, 24),
+    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }));
+  blob.rotation.x = -Math.PI / 2; blob.renderOrder = 1; scene.add(blob);
+  function placeBlob() {
+    let floor = -Infinity;
+    for (const b of boxes) {
+      if (Math.abs(p.x - b.x) > b.w / 2 || Math.abs(p.z - b.z) > b.d / 2) continue;
+      const t = b.y + b.h / 2;
+      if (t <= p.y + 0.05 && t > floor) floor = t;
+    }
+    blob.visible = floor > -Infinity;
+    if (!blob.visible) return;
+    const h = p.y - floor;
+    blob.position.set(p.x, floor + 0.02, p.z);
+    blob.material.opacity = Math.max(0.1, 0.4 - h * 0.03);
+    blob.scale.setScalar(1 + h * 0.04);
+  }
+
+  const ghostState = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, ground: true, slideT: 0, crouch: false, wallRunning: false, wall: null };
   function record(dt) {
     trailT += dt;
     while (trailT >= GHOST_DT) { trailT -= GHOST_DT; trail.push(+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)); }
     const g = bestRun?.ghost;
-    if (practice || !g || !g.length) { ghost.visible = false; return; }
+    if (practice || !g || !g.length) { ghost.group.visible = false; return; }
     const f = time / GHOST_DT, i = Math.min(Math.floor(f), g.length / 3 - 2), a = Math.min(1, f - i);
     if (i < 0) return;
-    ghost.visible = true;
-    ghost.position.set(g[i*3] + (g[i*3+3] - g[i*3]) * a, g[i*3+1] + (g[i*3+4] - g[i*3+1]) * a + 0.85, g[i*3+2] + (g[i*3+5] - g[i*3+2]) * a);
+    ghost.group.visible = true;
+    const nx = g[i*3] + (g[i*3+3] - g[i*3]) * a, ny = g[i*3+1] + (g[i*3+4] - g[i*3+1]) * a, nz = g[i*3+2] + (g[i*3+5] - g[i*3+2]) * a;
+    const gs = ghostState, inv = dt > 0 ? 1 / dt : 0;
+    Object.assign(gs, { vx: (nx - gs.x) * inv, vy: (ny - gs.y) * inv, vz: (nz - gs.z) * inv, x: nx, y: ny, z: nz });
+    gs.ground = Math.abs(gs.vy) < 0.5;
+    poseRunner(ghost, dt, Math.min(12, Math.hypot(gs.vx, gs.vz)), gs);
   }
 
   function finish() {
@@ -659,14 +901,14 @@
     sfx.win();
     let text;
     if (practice) {
-      text = `Gold roof reached in ${fmt(time)} s, practising from checkpoint ${practice}. Practice runs don't set a best time.`;
+      text = `Gold roof reached in ${fmt(time)} s, practising from checkpoint ${practice}, with ${runLanterns} lantern${runLanterns === 1 ? '' : 's'}. Practice runs don't set a best time.`;
     } else {
       const isBest = !bestRun || time < bestRun.time;
       if (isBest) {
-        bestRun = { time, splits: splits.slice(), ghost: trail.slice() };
+        bestRun = { time, splits: splits.slice(), ghost: trail.slice(), lanterns: runLanterns };
         try { localStorage.setItem(KEY, JSON.stringify(bestRun)); } catch {}
       }
-      text = `Gold roof reached in ${fmt(time)} s with ${falls} fall${falls === 1 ? '' : 's'}.` + (isBest ? ' New best.' : '');
+      text = `Gold roof reached in ${fmt(time)} s with ${falls} fall${falls === 1 ? '' : 's'} and ${runLanterns} of ${lanterns.length} lanterns.` + (isBest ? ' New best.' : '');
     }
     document.getElementById('msg').textContent = text;
     document.getElementById('go').textContent = 'Run again';
@@ -678,7 +920,8 @@
   function reset() {
     boxes.forEach(b => { if (b.cpIndex) b.mesh.material = mats.cp; });
     spawn = { x: 0, y: 0, z: 2, yaw: 0 };
-    cpReached = 0; falls = 0; time = 0; finished = false; practice = 0;
+    cpReached = 0; falls = 0; time = 0; finished = false; practice = 0; runLanterns = 0;
+    for (const l of lanterns) { l.got = false; l.mesh.visible = true; }
     splits = []; trail = []; trailT = 0;
     respawn(false);
   }
@@ -813,6 +1056,36 @@
     try { localStorage.setItem('rooftop-sens', sens); } catch {}
   });
 
+  function setCam(c) {
+    cam = c;
+    try { localStorage.setItem('rooftop-cam', c); } catch {}
+    document.body.classList.toggle('third', c === 'third');
+    document.getElementById('cam-third').setAttribute('aria-pressed', c === 'third');
+    document.getElementById('cam-first').setAttribute('aria-pressed', c === 'first');
+    pitch = clampPitch(pitch); camDist = CAM_DIST;
+  }
+  function toggleCam() {
+    setCam(cam === 'third' ? 'first' : 'third');
+    if (running) toast(cam === 'third' ? 'Third person' : 'First person', '#a89c93', 1000);
+  }
+  function setInvert(on) {
+    invertY = on;
+    try { localStorage.setItem('rooftop-invert', on ? '1' : '0'); } catch {}
+    document.getElementById('inv-off').setAttribute('aria-pressed', !on);
+    document.getElementById('inv-on').setAttribute('aria-pressed', on);
+  }
+  document.getElementById('cam-third').addEventListener('click', () => setCam('third'));
+  document.getElementById('cam-first').addEventListener('click', () => setCam('first'));
+  document.getElementById('inv-off').addEventListener('click', () => setInvert(false));
+  document.getElementById('inv-on').addEventListener('click', () => setInvert(true));
+  const fovEl = document.getElementById('fov'), fovV = document.getElementById('fovv');
+  fovEl.value = baseFov; fovV.textContent = baseFov + '°';
+  fovEl.addEventListener('input', () => {
+    baseFov = +fovEl.value; fovV.textContent = baseFov + '°';
+    try { localStorage.setItem('rooftop-fov', baseFov); } catch {}
+  });
+  setCam(cam); setInvert(invertY);
+
   let lastPointerType = '';
   addEventListener('pointermove', e => { lastPointerType = e.pointerType; }, true);
   addEventListener('pointerdown', e => { lastPointerType = e.pointerType; }, true);
@@ -876,8 +1149,7 @@
     if (!running) return;
     movesSeen++;
     if (!locked) mcheck.followPx += Math.abs(mx) + Math.abs(my);
-    yaw -= mx * 0.0022 * sens;
-    pitch = Math.max(-1.55, Math.min(1.55, pitch - my * 0.0022 * sens));
+    lookBy(mx * 0.0022 * sens, my * 0.0022 * sens);
   });
   // Turning speed near the edges: 0 in the middle, full at the edge. When the
   // cursor slips out of the page through an edge (easy inside an embedded frame)
@@ -893,17 +1165,25 @@
     edgeX = Math.sign(edgeX);
     lastMX = lastMY = null;
   });
+  // one place for all look input: respects inverted look and the camera's pitch limits
+  function clampPitch(v) { return cam === 'third' ? Math.max(-1.2, Math.min(0.9, v)) : Math.max(-1.55, Math.min(1.55, v)); }
+  function lookBy(dyaw, dpitch) { yaw -= dyaw; pitch = clampPitch(pitch - dpitch * (invertY ? -1 : 1)); }
   function turnKeys(dt) {
     if (lastPointerType === 'touch') edgeX = 0;
     const tx = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0) + (locked ? 0 : edgeX);
     const ty = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
-    yaw -= tx * 3 * sens * dt;
-    pitch = Math.max(-1.55, Math.min(1.55, pitch - ty * 1.8 * sens * dt));
+    lookBy(tx * 3 * sens * dt, ty * 1.8 * sens * dt);
   }
-  // ---------- touch controls ----------
+  // ---------- touch controls (laid out like Fire Escape) ----------
+  // Left half: a floating stick that appears under the thumb and follows it past the rim.
+  // Right half: tap anywhere below the top strip to jump (hold for height); Slide is the circle
+  // inside it, and rolling the thumb from Slide onto the rest of the right half jumps out of the
+  // slide, keeping its speed. Dragging any finger on the right half also turns the camera.
+  // Touches go through touch events where the browser has them: on iOS only a cancelled
+  // touchstart stops the long-press magnifier. Mouse and pen use pointer events.
   const touchEl = document.getElementById('touch'), stickEl = document.getElementById('stick'), knobEl = document.getElementById('knob');
-  const stick = { id: null, x: 0, y: 0, mag: 0, cx: 0, cy: 0 };
-  const looks = new Map();                 // pointerId -> last position of a look finger
+  const zoneL = document.getElementById('zone-l'), zoneR = document.getElementById('zone-r');
+  const bJump = document.getElementById('b-jump'), bSlide = document.getElementById('b-slide');
   let touchUI = false;
   function setTouchUI(on) {
     touchUI = on;
@@ -914,61 +1194,131 @@
     document.getElementById('senslabel').textContent = on ? 'Look sensitivity' : 'Mouse sensitivity';
     if (running) touchEl.hidden = !on;
   }
-  function hideTouch() {
-    touchEl.hidden = true; stickEl.hidden = true;
-    stick.id = null; stick.x = stick.y = stick.mag = 0; looks.clear();
-    for (const k of ['Space', 'KeyC']) keys[k] = false;
-    touchEl.querySelectorAll('.on').forEach(b => b.classList.remove('on'));
-  }
-  if (matchMedia('(pointer: coarse)').matches) setTouchUI(true);
+  if (matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0 && !matchMedia('(pointer: fine)').matches) setTouchUI(true);
   addEventListener('pointerdown', e => {
     if (e.pointerType === 'touch' && !touchUI) setTouchUI(true);
     else if (e.pointerType === 'mouse' && touchUI && !matchMedia('(pointer: coarse)').matches) setTouchUI(false);   // touchscreen laptop back on the mouse
   }, true);
-  touchEl.addEventListener('pointerdown', e => {
-    if (e.target.closest('.tbtn')) return;
-    e.preventDefault();
-    if (e.clientX < innerWidth * 0.45 && stick.id === null) {
-      Object.assign(stick, { id: e.pointerId, cx: e.clientX, cy: e.clientY, x: 0, y: 0, mag: 0 });
-      stickEl.style.left = e.clientX + 'px'; stickEl.style.top = e.clientY + 'px';
-      knobEl.style.transform = ''; stickEl.hidden = false;
-    } else {
-      looks.set(e.pointerId, [e.clientX, e.clientY]);
-    }
-  });
-  touchEl.addEventListener('pointermove', e => {
-    if (e.pointerId === stick.id) {
-      const RAD = 56;
-      let dx = e.clientX - stick.cx, dy = e.clientY - stick.cy;
-      const L = Math.hypot(dx, dy);
-      if (L > RAD) { dx *= RAD / L; dy *= RAD / L; }
-      stick.x = dx / RAD; stick.y = dy / RAD; stick.mag = Math.min(1, L / RAD);
-      knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
-      stickEl.classList.toggle('sprint', stick.mag > 0.85 && stick.y < -0.3);
-    } else if (looks.has(e.pointerId) && running) {
-      const [lx, ly] = looks.get(e.pointerId);
-      yaw -= (e.clientX - lx) * 0.006 * sens;
-      pitch = Math.max(-1.55, Math.min(1.55, pitch - (e.clientY - ly) * 0.006 * sens));
-      looks.set(e.pointerId, [e.clientX, e.clientY]);
-    }
-  });
-  const endTouch = e => {
-    if (e.pointerId === stick.id) { stick.id = null; stick.x = stick.y = stick.mag = 0; stickEl.hidden = true; }
-    looks.delete(e.pointerId);
-  };
-  touchEl.addEventListener('pointerup', endTouch);
-  touchEl.addEventListener('pointercancel', endTouch);
-  function holdButton(id, key, onDown) {
-    const el = document.getElementById(id);
-    el.addEventListener('pointerdown', e => { e.preventDefault(); keys[key] = true; el.classList.add('on'); if (onDown) onDown(); });
-    const up = () => { keys[key] = false; el.classList.remove('on'); };
-    el.addEventListener('pointerup', up);
-    el.addEventListener('pointercancel', up);
+
+  // touch-type pointer events are skipped wherever touch events exist (TouchEvent is the reliable sign;
+  // some browsers have touch events without an ontouchstart property)
+  const viaTouch = e => e.pointerType === 'touch' && (typeof TouchEvent !== 'undefined' || 'ontouchstart' in window);
+  function track(el, down, move, up) {
+    const opts = { passive: false };
+    el.addEventListener('touchstart', e => {
+      e.preventDefault(); if (!touchUI) setTouchUI(true);
+      for (const t of e.changedTouches) down('t' + t.identifier, t.clientX, t.clientY);
+    }, opts);
+    el.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) move('t' + t.identifier, t.clientX, t.clientY); }, opts);
+    const end = e => { e.preventDefault(); for (const t of e.changedTouches) up('t' + t.identifier); };
+    el.addEventListener('touchend', end, opts);
+    el.addEventListener('touchcancel', end, opts);
+    el.addEventListener('pointerdown', e => {
+      if (viaTouch(e)) return;
+      e.preventDefault();
+      try { el.setPointerCapture(e.pointerId); } catch {}
+      down('p' + e.pointerId, e.clientX, e.clientY);
+    });
+    el.addEventListener('pointermove', e => { if (!viaTouch(e)) move('p' + e.pointerId, e.clientX, e.clientY); });
+    for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(t, e => { if (!viaTouch(e)) up('p' + e.pointerId); });
   }
-  holdButton('t-jump', 'Space', () => { if (running) p.buffer = BUFFER; });
-  holdButton('t-slide', 'KeyC');
-  document.getElementById('t-pause').addEventListener('click', () => pause());
-  document.getElementById('t-reset').addEventListener('click', () => { if (running) respawn(false); });
+
+  let stickId = null, scx = 0, scy = 0;
+  const touchAna = { x: 0, y: 0, mag: 0 };
+  function stickMove(x, y) {
+    const rad = stickEl.offsetWidth / 2 || 60;
+    let dx = x - scx, dy = y - scy, len = Math.hypot(dx, dy);
+    if (len > rad) { scx += dx * (1 - rad / len); scy += dy * (1 - rad / len); dx = x - scx; dy = y - scy; len = rad; }
+    stickEl.style.left = scx - rad + 'px'; stickEl.style.top = scy - rad + 'px';
+    Object.assign(touchAna, { x: dx / rad, y: dy / rad, mag: len / rad });
+    knobEl.style.transform = `translate(${dx * 0.8}px, ${dy * 0.8}px)`;
+    stickEl.classList.toggle('sprint', touchAna.mag > 0.85 && touchAna.y < -0.3);
+  }
+  function stickUp(id) {
+    if (id !== stickId) return;
+    stickId = null;
+    Object.assign(touchAna, { x: 0, y: 0, mag: 0 });
+    stickEl.classList.remove('on', 'sprint'); stickEl.style.left = stickEl.style.top = stickEl.style.bottom = ''; knobEl.style.transform = '';
+  }
+  track(zoneL, (id, x, y) => {
+    if (stickId !== null) return;
+    stickId = id;
+    const rad = stickEl.offsetWidth / 2 || 60;
+    scx = Math.max(rad + 4, Math.min(innerWidth / 2 - rad, x));
+    scy = Math.max(rad + 4, Math.min(innerHeight - rad - 4, y));
+    stickEl.style.bottom = 'auto'; stickEl.classList.add('on');
+    stickMove(x, y);
+  }, (id, x, y) => { if (id === stickId) stickMove(x, y); }, stickUp);
+
+  const rightTouches = new Map();       // id -> { region, x, y }
+  function regionAt(x, y) {
+    const r = bSlide.getBoundingClientRect();
+    if (Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) < r.width / 2 + 18) return 'slide';
+    return y > innerHeight * 0.3 ? 'jump' : 'look';
+  }
+  function syncRight() {
+    const v = [...rightTouches.values()].map(t => t.region);
+    touchIn.jump = v.includes('jump'); touchIn.slide = v.includes('slide');
+    bJump.classList.toggle('on', touchIn.jump); bSlide.classList.toggle('on', touchIn.slide);
+  }
+  track(zoneR, (id, x, y) => {
+    const region = regionAt(x, y);
+    rightTouches.set(id, { region, x, y });
+    if (region === 'jump') pressJump();
+    syncRight();
+  }, (id, x, y) => {
+    const t = rightTouches.get(id);
+    if (!t) return;
+    if (running) lookBy((x - t.x) * 0.006 * sens, (y - t.y) * 0.006 * sens);
+    t.x = x; t.y = y;
+    if (t.region === 'slide' && regionAt(x, y) === 'jump') { t.region = 'jump'; pressJump(); }   // roll off Slide: slide jump
+    syncRight();
+  }, id => { rightTouches.delete(id); syncRight(); });
+
+  const tapButton = (id, fn) => track(document.getElementById(id), () => fn(), () => {}, () => {});
+  tapButton('t-pause', () => pause());
+  tapButton('t-reset', () => { if (running) respawn(false); });
+  tapButton('t-cam', () => toggleCam());
+
+  function releaseTouches() { if (stickId !== null) stickUp(stickId); rightTouches.clear(); syncRight(); }
+  // safety net: if the system ever swallows a touchend, drop touches the screen no longer has
+  document.addEventListener('touchend', e => {
+    const live = new Set([...e.touches].map(t => 't' + t.identifier));
+    if (stickId && stickId[0] === 't' && !live.has(stickId)) stickUp(stickId);
+    for (const id of [...rightTouches.keys()]) if (id[0] === 't' && !live.has(id)) rightTouches.delete(id);
+    syncRight();
+  }, { capture: true, passive: true });
+  function hideTouch() { touchEl.hidden = true; releaseTouches(); }
+  document.addEventListener('selectstart', e => { if (running) e.preventDefault(); });
+  addEventListener('contextmenu', e => { if (running) e.preventDefault(); });
+
+  // ---------- gamepad (buttons as in Fire Escape, right stick looks) ----------
+  // A / Y jump · B / X / RB / RT slide · left stick or d-pad move · right stick look
+  // Start pause / resume · Select back to checkpoint · LB or right-stick click: camera
+  const padPrev = {};
+  function pollPad(dt) {
+    const gp = navigator.getGamepads ? [...navigator.getGamepads()].find(g => g && g.connected) : null;
+    pad.jump = pad.slide = false;
+    let ax = 0, ay = 0;
+    if (gp) {
+      const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+      const edge = i => b(i) && !padPrev[i];
+      const dz = v => (Math.abs(v) < 0.18 ? 0 : v);
+      ax = dz(gp.axes[0] || 0) + (b(15) ? 1 : 0) - (b(14) ? 1 : 0);
+      ay = dz(gp.axes[1] || 0) + (b(13) ? 1 : 0) - (b(12) ? 1 : 0);
+      pad.jump = b(0) || b(3); pad.slide = b(1) || b(2) || b(5) || b(7);
+      if (edge(0) || edge(3)) { if (running) pressJump(); else start(); }
+      if (edge(9)) { if (!running) start(); else if (locked) document.exitPointerLock?.(); else pause(); }
+      if (edge(8) && running) respawn(false);
+      if (edge(4) || edge(11)) toggleCam();
+      const rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0);
+      if (running && (rx || ry)) lookBy(Math.sign(rx) * rx * rx * 3 * sens * dt, Math.sign(ry) * ry * ry * 2 * sens * dt);
+      for (let i = 0; i < gp.buttons.length; i++) padPrev[i] = b(i);
+    }
+    // touch stick wins over the gamepad stick
+    if (touchAna.mag > 0) Object.assign(ana, touchAna);
+    else { const m = Math.min(1, Math.hypot(ax, ay)); Object.assign(ana, { x: ax, y: ay, mag: m }); }
+  }
 
   addEventListener('resize', () => {
     renderer.setSize(innerWidth, innerHeight);
@@ -977,10 +1327,11 @@
 
   // ---------- loop ----------
   const tEl = document.getElementById('t'), tlEl = document.getElementById('tl'), dEl = document.getElementById('d');
-  const cEl = document.getElementById('c'), vEl = document.getElementById('v');
+  const cEl = document.getElementById('c'), vEl = document.getElementById('v'), lnEl = document.getElementById('ln');
   let last = performance.now(), clock = 0;
   function frame(now) {
     const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    pollPad(dt);
     if (running) {
       clock += dt; time += dt;
       turnKeys(dt);
@@ -1003,6 +1354,8 @@
     tEl.textContent = fmt(time); dEl.textContent = falls;
     cEl.textContent = cpReached + ' / ' + checkpoints.length;
     vEl.textContent = Math.hypot(p.vx, p.vz).toFixed(1);
+    lnEl.textContent = runLanterns + ' / ' + lanterns.length;
+    for (const l of lanterns) if (!l.got) { l.mesh.position.y = l.y + Math.sin(clock * 2 + l.id) * 0.1; l.mesh.rotation.y += dt * 0.8; }
     if (wind) {
       const sp = running ? Math.hypot(p.vx, p.vy, p.vz) : 0;
       wind.g.gain.setTargetAtTime(Math.min(0.35, 0.015 + sp * sp * 0.0012), ac.currentTime, 0.15);
@@ -1018,7 +1371,8 @@
   // hooks for the automated course test (only with #test in the address)
   if (location.hash === '#test') {
     window.rooftop = {
-      p, boxes, checkpoints, goal, keys, update, respawn, startFrom, pause,
+      p, boxes, checkpoints, goal, keys, update, respawn, startFrom, pause, lanterns, ana, toggleCam,
+      get runLanterns() { return runLanterns; }, get cam() { return cam; },
       get yaw() { return yaw; }, set yaw(v) { yaw = v; },
       get pitch() { return pitch; },
       get running() { return running; }, set running(v) { running = v; },

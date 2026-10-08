@@ -1,7 +1,7 @@
 {
   "name": "Rooftop Run",
   "short_name": "Rooftop Run",
-  "description": "A first-person parkour run over the rooftops: sprint, wall-run, wall-jump and slide through nine sections.",
+  "description": "A parkour run over the rooftops in third or first person: run, wall-run, wall-jump and slide through nine sections and find the lanterns.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

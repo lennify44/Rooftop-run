@@ -18,7 +18,7 @@ for (let i = 0; i + 1 < path.length; i++) {
   else if (B[B.indexOf(Bt) - 1].kind === 'wall') r = wallrun(A, B[B.indexOf(Bt) - 1], Bt, 'runoff');
   else if (A.kind === 'move' || Bt.kind === 'move') { for (let k = 0; k < 24 && !(r = leg({ A, Bt, phase: 50 + k * 0.731 })).ok; k++); }
   else r = leg({ A, Bt });
-  if (!r.ok) out.push({ leg: B.indexOf(A) + '->' + B.indexOf(Bt), r });
+  if (!r.ok) out.push({ leg: B.indexOf(A) + '->' + B.indexOf(Bt), ok: false, r });
   if (Bt.cpIndex) check('checkpoint ' + Bt.cpIndex + ' registered', G.cpReached === Bt.cpIndex, G.cpReached);
 }
 leg({ A: path[path.indexOf(pads[0]) - 1], targets: [pads[0], path[path.indexOf(pads[0]) + 1]] });

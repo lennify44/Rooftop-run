@@ -49,22 +49,24 @@ try:
     check('tapping Play starts the game', js('return rooftop.running'))
     check('touch buttons visible', js("return !document.getElementById('touch').hidden"))
 
+    W, Hh = js('return [innerWidth, innerHeight]')      # positions relative to the real viewport
     z0 = js('return rooftop.p.z')
-    drag(2, 120, 300, 120, 230, hold=True); time.sleep(0.5)          # left thumb pushed up to the edge
+    drag(2, 120, Hh * 0.6, 120, Hh * 0.6 - 100, hold=True); time.sleep(0.5)   # left thumb pushed up past the rim
     v = js('return Math.hypot(rooftop.p.vx, rooftop.p.vz)')
     check('left thumb pushed to the edge sprints forward', abs(v - 9.2) < 0.3 and js('return rooftop.p.z') < z0 - 1, f'{v:.1f} m/s')
     y0 = js('return rooftop.yaw')
-    drag(3, 600, 200, 660, 200)                                      # right thumb drags while the left one holds
-    check('right thumb turns the view while moving (two fingers)', js('return rooftop.yaw') - y0 < -0.2,
+    drag(3, W * 0.72, Hh * 0.12, W * 0.72 + 60, Hh * 0.12)           # right thumb drags in the look strip while the left one holds
+    check('right thumb turns the view while moving (two fingers), by exactly the drag', abs(js('return rooftop.yaw') - y0 + 0.36) < 0.03,
           f"yaw change {js('return rooftop.yaw') - y0:.3f}")
-    touch(2, 'up', 120, 230); time.sleep(0.4)
+    check('looking did not jump', js('return rooftop.p.y') < 0.05)
+    touch(2, 'up', 120, Hh * 0.6 - 100); time.sleep(0.4)
     v = js('return Math.hypot(rooftop.p.vx, rooftop.p.vz)')
     check('lifting the left thumb stops', v < 0.5, f'{v:.1f} m/s')
 
     js('rooftop.respawn(false)'); time.sleep(0.3)
-    jx, jy = center('t-jump')
+    jx, jy = center('b-jump')
     touch(4, 'down', jx, jy); time.sleep(0.15)
-    check('Jump button jumps', js('return rooftop.p.y') > 0.4, f"y = {js('return rooftop.p.y'):.2f}")
+    check('tap in the jump zone jumps', js('return rooftop.p.y') > 0.4, f"y = {js('return rooftop.p.y'):.2f}")
     touch(4, 'up', jx, jy); time.sleep(0.8)
 
     check('page did not scroll or zoom', js('return scrollX === 0 && scrollY === 0 && visualViewport.scale === 1'),

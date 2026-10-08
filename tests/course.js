@@ -24,7 +24,7 @@ for (let i = 0; i + 1 < path.length; i++) {
   }
   if (A.kind === 'move' || Bt.kind === 'move') {
     const r = {};
-    for (const walk of [false, true]) {
+    for (const walk of [false]) {
       let n = 0;
       for (let k = 0; k < 24; k++) if (leg({ A, Bt, phase: 50 + k * 0.731, walk }).ok) n++;
       r[walk ? 'walk' : 'sprint'] = n + '/24 start moments work';
@@ -33,7 +33,7 @@ for (let i = 0; i + 1 < path.length; i++) {
     continue;
   }
   const r = {};
-  for (const walk of [false, true]) {
+  for (const walk of [false]) {
     const ok = [0, 0.2, 0.4, 0.7].filter(e => leg({ A, Bt, early: e, walk }).ok);
     r[walk ? 'walk' : 'sprint'] = ok.length ? 'jump ' + ok.join('/') + ' m before edge' : 'NO';
   }
@@ -42,10 +42,10 @@ for (let i = 0; i + 1 < path.length; i++) {
 // pad chains
 {
   const p1 = pads[0], from = path[path.indexOf(p1) - 1], to = path[path.indexOf(p1) + 1];
-  for (const walk of [false, true]) for (const e of [0, 0.3])
+  for (const walk of [false]) for (const e of [0, 0.3])
     report.push({ leg: `${name(from)} -> pad -> ${name(to)} (${walk ? 'walk' : 'sprint'}, early ${e})`, ...leg({ A: from, targets: [p1, to], early: e, walk }) });
   const p2 = pads[1], p3 = pads[2], from2 = path[path.indexOf(p2) - 1], to2 = path[path.indexOf(p3) + 1];
-  for (const walk of [false, true]) for (const e of [0, 0.3])
+  for (const walk of [false]) for (const e of [0, 0.3])
     report.push({ leg: `${name(from2)} -> pad -> pad -> ${name(to2)} (${walk ? 'walk' : 'sprint'}, early ${e})`, ...leg({ A: from2, targets: [p2, p3, to2], early: e, walk }) });
 }
 // slide roof

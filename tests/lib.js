@@ -55,18 +55,18 @@ function airControl(cur, sprint, nextT) {
   }
   const dl = Math.hypot(dvx, dvz);
   keys.KeyS = keys.KeyA = keys.KeyD = false;
-  if (dl < 0.15) { keys.KeyW = false; keys.ShiftLeft = false; return; }
+  if (dl < 0.15) { keys.KeyW = false; return; }
   const dx = dvx / dl, dz = dvz / dl;
   const b = p.vx * dx + p.vz * dz, c = p.vx * p.vx + p.vz * p.vz - speed * speed;
   const lam = -b + Math.sqrt(Math.max(0, b * b - c));
   const wx = p.vx + lam * dx, wz = p.vz + lam * dz;
   G.yaw = Math.atan2(-wx, -wz);
-  keys.KeyW = true; keys.ShiftLeft = sprint;
+  keys.KeyW = true;                    // forward always runs
 }
 
 // Run-and-jump leg with air control like a player: aims at the current target,
 // brakes (S) in the air when the landing would overshoot it, pushes on when short.
-// o.targets: boxes to touch in order (pads, then the landing box). o.walk: no sprint.
+// o.targets: boxes to touch in order (pads, then the landing box).
 function leg(o) {
   const { A } = o;
   const targets = o.targets || [o.Bt];
@@ -88,7 +88,7 @@ function leg(o) {
     const cur = targets[ti];
     if (!jumped) {
       const rr = runTo(); aim(rr[0], rr[1]);
-      keys.KeyW = true; keys.ShiftLeft = !o.walk;
+      keys.KeyW = true;
       const sp = Math.hypot(p.vx, p.vz) || 1;
       const ax = p.x + p.vx / sp * early, az = p.z + p.vz / sp * early;
       if (!p.ground || (early > 0 && p.ground === A && !onTop(A, ax, az, -0.3))) { jump(); jumped = true; }
@@ -110,7 +110,7 @@ function wallrun(A, wall, L, variant) {
   const entry = [face, wall.z - wall.d / 2 + 2.5];
   place(A.x, top(A), A.z - A.d / 2 + 0.4);
   clearKeys(); settle();
-  keys.KeyW = true; keys.ShiftLeft = true;
+  keys.KeyW = true;
   let jumped = false, touched = false, wj = false, t = 0, maxRun = 0;
   while (t < 5) {
     if (p.wallT > 0) touched = true;
@@ -134,7 +134,7 @@ function chimney(C, exit, trigVy) {
   G.yaw = Math.PI;                  // facing +z (towards the exit): KeyD moves -x, KeyA moves +x
   keys.KeyW = true;                 // walk to the exit end of the chimney first
   let t = 0;
-  while (p.z < C.z + C.d / 2 - 1.3 && t < 2) { step(); t += DT; }
+  while (p.z < C.z + C.d / 2 - 2.2 && t < 2) { step(); t += DT; }   // forward runs: leave room to stop
   keys.KeyW = false;
   for (let i = 0; i < 60; i++) { step(); t += DT; }     // come to a stop
   let side = 'KeyD', jumps = 0, exiting = false;
@@ -157,14 +157,14 @@ function chimney(C, exit, trigVy) {
 function slide(A, roof, bars, goal, finalAt) {
   place(A.x - A.w / 2 + 0.4, top(A), A.z);
   clearKeys(); settle();
-  keys.KeyW = true; keys.ShiftLeft = true;
+  keys.KeyW = true;
   let jumped = false, finalSlide = false, t = 0;
   const edge = roof.x + roof.w / 2;
   while (t < 6) {
     aim(goal.x, goal.z);
     const nearBar = bars.some(b => p.x > b.x - 3.2 && p.x < b.x + 0.9);
-    if (!finalSlide && p.x > edge - finalAt) { finalSlide = true; keys.KeyC = false; step(); keys.KeyC = true; }
-    else if (!finalSlide) keys.KeyC = nearBar;
+    if (!finalSlide && p.x > edge - finalAt) { finalSlide = true; keys.KeyX = false; step(); keys.KeyX = true; }   // X slides (C jumps now)
+    else if (!finalSlide) keys.KeyX = nearBar;
     if (!jumped && !p.ground && p.x > edge - 1) { jump(); jumped = true; }
     step(); t += DT;
     if (p.ground === goal) return { ok: true, t: +t.toFixed(2), speedAtEnd: +Math.hypot(p.vx, p.vz).toFixed(1) };
