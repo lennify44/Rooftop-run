@@ -7,3 +7,4 @@ VENV="${XDG_CACHE_HOME:-$HOME/.cache}/rooftop-run-tests"
 [ -x "$VENV/bin/python" ] || { python3 -m venv "$VENV" && "$VENV/bin/pip" install -q selenium; }
 "$VENV/bin/python" run.py course.js flow.js
 "$VENV/bin/python" touch.py
+"$VENV/bin/python" mouse.py

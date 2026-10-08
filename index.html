@@ -695,7 +695,7 @@
   let mouseMode = 'capture', mouseNote = '';
   try { if (localStorage.getItem('rooftop-mouse') === 'follow') mouseMode = 'follow'; } catch {}
   let locked = false, releasing = false, zeroMoves = 0, movesSeen = 0, movesAtStart = 0, lockMoves = 0, lockTime = 0, hinted = false;
-  let lastMX = null, lastMY = null, edgeX = 0, edgeY = 0;
+  let lastMX = null, lastMY = null, edgeX = 0, edgeY = 0, settleMoves = 0;
 
   const mcheck = { events: 0, lockedEvents: 0, lockedMoving: 0, followPx: 0, lockReq: 0, lockOn: 0, lockErr: 0 };
   function capture() {
@@ -715,7 +715,8 @@
     return 'Mouse check · ' + (locked ? 'captured' : 'not captured') +
       ` · capture asked ${c.lockReq}, granted ${c.lockOn}, refused ${c.lockErr}` +
       ` · mouse events ${c.events} (while captured ${c.lockedEvents}, with movement ${c.lockedMoving})` +
-      ` · cursor-follow movement ${Math.round(c.followPx)} px · page focused: ${document.hasFocus() ? 'yes' : 'no'}`;
+      ` · cursor-follow movement ${Math.round(c.followPx)} px · page focused: ${document.hasFocus() ? 'yes' : 'no'}` +
+      (c.broken ? ` · capture ${c.broken}` : '');
   }
   function renderMouseUI() {
     document.getElementById('mstat').textContent = mcheck.lockReq || mcheck.events ? mouseReport() : '';
@@ -778,8 +779,8 @@
   document.addEventListener('pointerlockchange', () => {
     locked = document.pointerLockElement === canvas;
     if (locked) mcheck.lockOn++;
-    zeroMoves = 0; lastMX = lastMY = null;
-    if (locked) { lockMoves = movesSeen; lockTime = 0; hinted = false; }
+    zeroMoves = 0; lastMX = lastMY = null; settleMoves = 2;
+    if (locked) { lockMoves = movesSeen; lockTime = 0; hinted = false; resetLockCheck(); }
     if (!locked && running && !finished && !releasing) pause();
     releasing = false;
   });
@@ -802,6 +803,36 @@
   addEventListener('pointermove', e => { lastPointerType = e.pointerType; }, true);
   addEventListener('pointerdown', e => { lastPointerType = e.pointerType; }, true);
   // on-screen mouse check (F2, and in the pause menu): what the browser actually delivers
+  // A capture that cannot hold the pointer still (Firefox on some Linux desktops) reports, on every
+  // event, how far the pointer is from where it was captured instead of how far it moved: large
+  // values that barely change, so the camera runs off (typically straight up). A real mouse sends
+  // small, varying steps. Hold back the first few captured events until they look sane, and drop
+  // the capture for cursor-follow as soon as the pattern shows.
+  let lockSeen = 0, lockMovedOk = false, stickyRun = 0, sameRun = 0, prevMx = 0, prevMy = 0;
+  const heldBack = [];
+  function resetLockCheck() { lockSeen = 0; lockMovedOk = false; stickyRun = sameRun = 0; prevMx = prevMy = 0; heldBack.length = 0; }
+  function lockCheck(mx, my) {                       // true: do not apply this event
+    const mag = Math.abs(mx) + Math.abs(my), change = Math.abs(mx - prevMx) + Math.abs(my - prevMy);
+    stickyRun = mag > 120 && change < mag * 0.25 ? stickyRun + 1 : 0;
+    sameRun = mag >= 6 && mx === prevMx && my === prevMy ? sameRun + 1 : 0;
+    prevMx = mx; prevMy = my;
+    if (stickyRun >= 6 || sameRun >= 12) { captureBroken('reports the pointer position instead of its movement'); return true; }
+    if (++lockSeen <= 8) {                           // first events after capturing: judge before turning
+      heldBack.push(mag);
+      if (heldBack.length < 8) return mag > 60;      // small steps are applied right away
+      const sorted = [...heldBack].sort((a, b) => a - b);
+      if (sorted[4] > 60) { captureBroken('reports the pointer position instead of its movement'); return true; }
+      return mag > 60;
+    }
+    lockMovedOk = true;
+    return mag > 400;                                // single spikes some browsers send
+  }
+  function captureBroken(why) {
+    mcheck.broken = why;
+    setMouseMode('follow', 'Mouse capture in this browser ' + why + ', so Rooftop Run switched to Follow cursor (the view turns as the cursor moves).');
+    toast('Switched to follow cursor', '#a89c93', 2500);
+  }
+
   addEventListener('mousemove', e => {
     mcheck.events++;
     if (locked) { mcheck.lockedEvents++; if (e.movementX || e.movementY) mcheck.lockedMoving++; }
@@ -812,17 +843,21 @@
     if (locked) {
       mx = e.movementX || 0; my = e.movementY || 0;
       if (!mx && !my) {
-        // Some Linux setups grant capture but report no movement: fall back.
-        if (running && ++zeroMoves >= 12) setMouseMode('follow', 'Mouse capture reported no movement in this browser, so Rooftop Run switched to Follow cursor.');
+        // capture granted but no movement ever reported: fall back (slow real moves also give zeros, so be patient)
+        if (running && ++zeroMoves >= 40 && !lockMovedOk) captureBroken('reported no movement');
         return;
       }
       zeroMoves = 0;
+      if (lockCheck(mx, my)) return;
     } else {
       mx = lastMX === null ? 0 : e.clientX - lastMX;
       my = lastMY === null ? 0 : e.clientY - lastMY;
       lastMX = e.clientX; lastMY = e.clientY;
+      // right after a capture ends Firefox reports the old capture point once, then the real
+      // pointer: skip those, and any single jump no hand makes between two events
+      if (settleMoves > 0) { settleMoves--; mx = my = 0; }
+      if (Math.abs(mx) + Math.abs(my) > 150) mx = my = 0;
       edgeX = edgeAmount(e.clientX / innerWidth);
-      edgeY = edgeAmount(e.clientY / innerHeight);
     }
     if (!running) return;
     movesSeen++;
@@ -841,13 +876,13 @@
   }
   addEventListener('mouseout', e => {
     if (e.relatedTarget) return;
-    edgeX = Math.sign(edgeX); edgeY = Math.sign(edgeY);
+    edgeX = Math.sign(edgeX);
     lastMX = lastMY = null;
   });
   function turnKeys(dt) {
-    if (lastPointerType === 'touch') edgeX = edgeY = 0;
+    if (lastPointerType === 'touch') edgeX = 0;
     const tx = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0) + (locked ? 0 : edgeX);
-    const ty = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0) + (locked ? 0 : edgeY);
+    const ty = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
     yaw -= tx * 3 * sens * dt;
     pitch = Math.max(-1.55, Math.min(1.55, pitch - ty * 1.8 * sens * dt));
   }
