@@ -1,0 +1,16 @@
+{
+  "name": "Rooftop Run",
+  "short_name": "Rooftop Run",
+  "description": "A first-person parkour run over the rooftops: sprint, wall-run, wall-jump and slide through nine sections.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#1a1424",
+  "theme_color": "#1a1424",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

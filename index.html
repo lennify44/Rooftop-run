@@ -9,6 +9,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rooftop Run">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=JetBrains+Mono:wght@400;700&display=swap">
 <style>
@@ -156,6 +160,8 @@
 <script>
   // Show failures on screen instead of leaving a frozen page.
   addEventListener('error', e => {
+    const t = e.target;
+    if (t && t !== window && t.tagName !== 'SCRIPT') return;   // a missing font, icon or manifest is not a failure
     const el = document.getElementById('err');
     el.hidden = false;
     el.textContent = 'Something broke: ' + (e.message || 'a script failed to load (' + (e.target && e.target.src) + ')') +
